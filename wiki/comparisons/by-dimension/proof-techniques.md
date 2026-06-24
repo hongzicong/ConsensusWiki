@@ -11,7 +11,7 @@ tags: [proof]
 |---|---|---|
 | [[FastPaxos]] | Round/value votes | Higher rounds cannot choose incompatible lower possible choices |
 | [[EPaxos]] | Instance tuple `(cmd, seq, deps)` | One safe tuple per instance; interfering commands dependency-ordered |
-| [[EPaxosStar|EPaxos*]] | Command payload/dependency graph plus recovery validation evidence | Agreement for `(cmd, dep)`; visibility for conflicting committed commands |
+| [[EPaxosStar]] | Command payload/dependency graph plus recovery validation evidence | Agreement for `(cmd, dep)`; visibility for conflicting committed commands |
 | [[SwiftPaxos]] | Accepted dependency paths | Same dependencies for committed command; acyclic committed graph |
 | [[Pando]] | Proposal/value/split evidence | Later proposals recover any earlier chosen value |
 

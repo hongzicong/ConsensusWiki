@@ -79,7 +79,7 @@ The key invariant is that a higher round cannot choose a value different from a 
 - TLA+ constants include `FastNum`, `Quorum(i)`, `Coord(i)`.
 
 ## Relationship to other protocols
-[[Fast Paxos]] is a base for later fast-consensus and leaderless/near-leaderless systems such as [[EPaxos]], [[SwiftPaxos]], and [[Pando]].
+[[FastPaxos|Fast Paxos]] is a base for later fast-consensus and leaderless/near-leaderless systems such as [[EPaxos]], [[SwiftPaxos]], and [[Pando]].
 
 ## Modeling notes
 
@@ -96,4 +96,4 @@ Fast latency is not guaranteed under collisions. Implementation choices for reco
 - TODO: Capture the exact size constraints for all `(N, F, E)` examples from Section 3.4 in a separate proof note.
 
 ## Related pages
-[[Fast Paxos]], [[quorum]], [[fast-path]], [[recovery]], [[agreement]], [[quorum-intersection]]
+[[FastPaxos|Fast Paxos]], [[quorum]], [[fast-path]], [[recovery]], [[agreement]], [[quorum-intersection]]

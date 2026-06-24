@@ -2,7 +2,7 @@
 type: protocol
 name: SwiftPaxos
 family: paxos / dependency-based SMR
-papers: [[[SwiftPaxos-2024]]]
+papers: [SwiftPaxos-2024]
 tags: [consensus]
 ---
 

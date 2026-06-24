@@ -2,7 +2,7 @@
 type: protocol
 name: EPaxos
 family: paxos / leaderless
-papers: [[[EPaxos-2013]], [[EPaxos-Revisited-2021]]]
+papers: [EPaxos-2013, EPaxos-Revisited-2021]
 tags: [consensus]
 ---
 

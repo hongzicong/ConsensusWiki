@@ -79,7 +79,7 @@ The proof defines `acc(b,id,c,P)` for accepted dependency paths by a fast or slo
 - `(C2)`: unique fixed majority fast quorum.
 
 ## Relationship to other protocols
-SwiftPaxos is closely related to [[EPaxos]] through dependencies, to [[Fast Paxos]] through fast-quorum reasoning, and to classic Paxos through ballots and leader recovery.
+SwiftPaxos is closely related to [[EPaxos]] through dependencies, to [[FastPaxos|Fast Paxos]] through fast-quorum reasoning, and to classic Paxos through ballots and leader recovery.
 
 ## Modeling notes
 

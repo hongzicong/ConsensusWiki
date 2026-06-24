@@ -2,7 +2,7 @@
 type: protocol
 name: EPaxos*
 family: paxos / leaderless SMR
-papers: [[[Making-Democracy-Work-2025]]]
+papers: [Making-Democracy-Work-2025]
 tags: [consensus, leaderless, dependencies, recovery]
 ---
 

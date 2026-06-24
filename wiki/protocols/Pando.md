@@ -2,7 +2,7 @@
 type: protocol
 name: Pando
 family: geo-distributed storage / paxos
-papers: [[[Pando-2020]]]
+papers: [Pando-2020]
 tags: [consensus]
 ---
 

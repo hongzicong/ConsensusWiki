@@ -37,12 +37,17 @@
 - [[quorum-systems]] - Quorum mechanisms by protocol.
 - [[fast-paths]] - Fast-path assumptions and evidence.
 - [[recovery-rules]] - Recovery evidence and selection.
+- [[commit-rules]] - Commit predicates and safety evidence.
+- [[fault-models]] - Failure assumptions across protocols.
+- [[timing-assumptions]] - Safety/liveness timing assumptions.
 - [[leader-roles]] - Leader/delegate involvement.
 - [[conflict-handling]] - Collisions, dependencies, and write conflicts.
 - [[proof-techniques]] - Main proof invariants.
 - [[paxos-family]] - Paxos-family overview.
 - [[fast-consensus]] - Fast consensus overview.
 - [[leaderless-protocols]] - Leaderless protocols overview.
+- [[bft-consensus]] - Placeholder for future BFT consensus papers.
+- [[dag-based-consensus]] - Placeholder for future DAG-based consensus papers.
 - [[FastPaxos-EPaxos-SwiftPaxos]] - Focused modeling comparison.
 
 ## Proof notes
@@ -56,6 +61,7 @@
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
 
 ## Recently updated
+- 2026-06-25 - Linted wiki structure; added missing comparison pages and fixed catalog/link formatting issues.
 - 2026-06-24 - Added EPaxos* `e = f` boundary-case quorum note.
 - 2026-06-24 - Clarified EPaxos* `e` as the fast-path failure budget and why fast quorum size is `n - e`.
 - 2026-06-24 - Added Pando quorum sizes to the fast quorum comparison table.

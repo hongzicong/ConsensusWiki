@@ -2,7 +2,7 @@
 type: protocol
 name: Fast Paxos
 family: paxos / fast consensus
-papers: [[[FastPaxos-2006]]]
+papers: [FastPaxos-2006]
 tags: [consensus]
 ---
 
