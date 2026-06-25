@@ -61,6 +61,8 @@
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
 
 ## Recently updated
+- 2026-06-25 - Added EPaxos/SwiftPaxos fusion notes to [[FastPaxos-EPaxos-SwiftPaxos]] and [[new-protocol-ideas]].
+- 2026-06-25 - Added fast-path design notes to [[new-protocol-ideas]].
 - 2026-06-25 - Linted wiki structure; added missing comparison pages and fixed catalog/link formatting issues.
 - 2026-06-24 - Added EPaxos* `e = f` boundary-case quorum note.
 - 2026-06-24 - Clarified EPaxos* `e` as the fast-path failure budget and why fast quorum size is `n - e`.
