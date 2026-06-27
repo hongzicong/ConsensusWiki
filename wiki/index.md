@@ -1,10 +1,11 @@
-# ConsensusWiki Index
+﻿# ConsensusWiki Index
 
 ## Papers
 - [[FastPaxos-2006]] - Fast Paxos fast rounds and quorum requirements.
 - [[EPaxos-2013]] - Leaderless dependency-based Paxos for geo-replicated SMR.
 - [[EPaxos-Revisited-2021]] - Reevaluation of EPaxos conflict behavior, tail latency, and clock-based mitigation.
 - [[Making-Democracy-Work-2025]] - EPaxos* correction with validation-based recovery and optimal `f`/`e` quorum bound.
+- [[Mencius-2008]] - Multi-leader Paxos-derived SMR for WANs using rotating coordinators and cheap `no-op` skips.
 - [[Pando-2020]] - Erasure-coded geo-storage with Phase 1a/1b/2 quorums.
 - [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums.
 
@@ -12,6 +13,7 @@
 - [[FastPaxos]] - Classic Paxos extended with fast rounds.
 - [[EPaxos]] - Egalitarian Paxos with command leaders and dependencies.
 - [[EPaxosStar|EPaxos*]] - Corrected/simplified EPaxos with validation-based recovery.
+- [[Mencius]] - Rotating-coordinator SMR that partitions log instances among servers.
 - [[Pando]] - Paxos-style erasure-coded storage protocol.
 - [[SwiftPaxos]] - WAN SMR using FastAck/SlowAck dependency evidence.
 
@@ -61,6 +63,7 @@
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
 
 ## Recently updated
+- 2026-06-27 - Ingested Mencius from `raw/mencius.pdf`.
 - 2026-06-25 - Added EPaxos/SwiftPaxos fusion notes to [[FastPaxos-EPaxos-SwiftPaxos]] and [[new-protocol-ideas]].
 - 2026-06-25 - Added fast-path design notes to [[new-protocol-ideas]].
 - 2026-06-25 - Linted wiki structure; added missing comparison pages and fixed catalog/link formatting issues.
@@ -73,3 +76,7 @@
 - 2026-06-24 - Clarified fast quorum size counting for FastPaxos, EPaxos, and SwiftPaxos.
 - 2026-06-24 - Ingested EPaxos Revisited from `raw/epaxos_revisited.pdf`.
 - 2026-06-24 - Ingested Fast Paxos, EPaxos, PANDO, and SwiftPaxos from `raw/`.
+
+
+
+

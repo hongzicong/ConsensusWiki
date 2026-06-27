@@ -1,7 +1,7 @@
----
+﻿---
 type: comparison-dimension
 dimension: fast paths
-protocols: [FastPaxos, EPaxos, EPaxosStar, SwiftPaxos, Pando]
+protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, SwiftPaxos, Pando]
 tags: [fast-path]
 ---
 
@@ -13,6 +13,7 @@ tags: [fast-path]
 | [[FastPaxos]] | Acceptors vote after `phase2a any` | No collision for two-delay learn | Collision recovery must pick safe value | Frequent collisions hurt progress | Model `any` separately | [[FastPaxos-2006]] |
 | [[EPaxos]] | Matching PreAccept attributes | Non-conflicting or identically observed conflicts | Same `(cmd, seq, deps)` committed | Falls back to Accept; execution may still wait on dependencies | Interference relation drives deps; measure execution latency separately | [[EPaxos-2013]], [[EPaxos-Revisited-2021]] |
 | [[EPaxosStar]] | Matching `PreAcceptOK` dependency sets equal to `initDep[id]` | Conflict-free command and at most `e` fast-path failures in synchronous run | Same `(cmd, dep)` plus visibility for conflicting commands | Executes at submitter by `t + 2 Delta` under the `e`-fast condition | Do not add EPaxos sequence numbers; model dependency SCC execution | [[Making-Democracy-Work-2025]] |
+| [[Mencius]] | Local rotating coordinator path; one-way `SKIP` learning for `no-op` | Each instance has one coordinator allowed to propose non-`no-op` | Avoids Fast Paxos-style collisions by construction | Idle coordinators must skip or be revoked to avoid gaps | Do not model `SKIP` as a fast quorum; it is owner evidence under simple consensus | [[Mencius-2008]] |
 | [[SwiftPaxos]] | Matching FastAck dependency paths | Fast quorum agrees with leader | Same deps and acyclic graph | SlowAck fallback | Dependency paths matter | [[SwiftPaxos-2024]] |
 | [[Pando]] | Phase 1a fast read; delegated write overlap | Chosen value detectable from nearby quorum | Reads only return chosen values | Phase 1b/write-back fallback | Split reconstruction predicate | [[Pando-2020]] |
 
@@ -31,3 +32,5 @@ The fast path is safe only when the fast evidence already contains enough inform
 | Modeling pitfall | Treating `any` as a normal value | Counting commit latency while ignoring execution waiting on dependencies | Modeling direct deps only instead of dependency paths and acyclicity |
 
 Summary: [[FastPaxos]] is a fast single-value consensus mechanism; [[EPaxos]] turns fast consensus into per-command SMR by committing ordering metadata; [[SwiftPaxos]] keeps dependency-based SMR but adds leader-including fast quorums and SlowAck repair to make disagreement cheaper to resolve.
+
+
