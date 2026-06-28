@@ -506,6 +506,16 @@ Prefer this answer structure:
 ## Caveats
 ```
 
+## Brainstorm workflow
+
+When asked to reread the wiki and propose new protocol ideas:
+
+1. Read `wiki/index.md`, `wiki/comparisons/protocol-catalog.md`, relevant comparison pages, proof notes, and existing open questions.
+2. Ground ideas in cited wiki pages; do not invent paper claims that are not already supported.
+3. Update `wiki/open-questions/new-protocol-ideas.md` with concise sections covering motivation, source mechanisms, design sketch, proof obligations, risks, and TODOs.
+4. Mark speculative parts clearly as `Idea`, `Hypothesis`, `TODO`, or `Unclear`.
+5. Update `wiki/index.md` if the idea page changes meaningfully.
+
 ## Lint workflow
 
 When asked to check the wiki, look for:
@@ -566,6 +576,6 @@ When asked to ingest a paper, perform the ingest workflow.
 
 When asked to compare protocols, use protocol catalog, dimension pages, and family pages before creating pairwise comparisons.
 
-When asked about a new protocol idea, relate it to existing mechanisms, proof notes, and open questions.
+When asked to brainstorm, perform the brainstorm workflow.
 
 When asked to prepare material for Rocq/Coq or TLA+, focus on state, messages, transition rules, quorum assumptions, invariants, and proof obligations.

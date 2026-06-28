@@ -63,6 +63,7 @@
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
 
 ## Recently updated
+- 2026-06-28 - Reread comparison/proof notes and expanded [[new-protocol-ideas]] with grounded design sketches.
 - 2026-06-27 - Ingested Mencius from `raw/mencius.pdf`.
 - 2026-06-25 - Added EPaxos/SwiftPaxos fusion notes to [[FastPaxos-EPaxos-SwiftPaxos]] and [[new-protocol-ideas]].
 - 2026-06-25 - Added fast-path design notes to [[new-protocol-ideas]].
