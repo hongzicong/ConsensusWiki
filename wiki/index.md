@@ -63,6 +63,9 @@
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
 
 ## Recently updated
+- 2026-06-30 - Added more candidate ideas to [[new-protocol-ideas]] across faster fast paths and faster slow/recovery paths.
+- 2026-06-30 - Refined [[new-protocol-ideas]] around faster fast paths or 1RTT fast paths with faster slow paths.
+- 2026-06-30 - Reorganized [[new-protocol-ideas]] around a fast-path non-regression gate.
 - 2026-06-28 - Reread comparison/proof notes and expanded [[new-protocol-ideas]] with grounded design sketches.
 - 2026-06-27 - Ingested Mencius from `raw/mencius.pdf`.
 - 2026-06-25 - Added EPaxos/SwiftPaxos fusion notes to [[FastPaxos-EPaxos-SwiftPaxos]] and [[new-protocol-ideas]].
