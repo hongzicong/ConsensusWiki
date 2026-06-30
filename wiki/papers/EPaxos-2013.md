@@ -80,11 +80,6 @@ Commands eventually commit under majority availability and client retries. Execu
 ## Relationship to other protocols
 EPaxos draws on Paxos, Fast Paxos, Generalized Paxos, and Mencius. [[SwiftPaxos]] reuses dependencies but constrains them to remain acyclic; [[Pando]] uses EPaxos as a geo-replication baseline.
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-Separate instance safety from execution-order safety. Model interference as an explicit relation and prove that committed interfering commands are related by dependency reachability or sequence ordering.
-
 ## Limitations
 Execution may lag commit under dependency chains or high conflict. Exact optimized recovery is subtle; use the technical report for full proofs.
 

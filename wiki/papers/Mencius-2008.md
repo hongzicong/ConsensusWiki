@@ -138,16 +138,6 @@ Rules 1-4 ensure that a client request sent to a correct server eventually commi
 - [[EPaxos]] and [[SwiftPaxos]] use dependency metadata to order conflicting commands. Mencius uses ordinary sequence instances, with optional commutativity-based out-of-order commit as an execution optimization.
 - The paper describes Mencius as a rotating coordinator or moving sequencer protocol.
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-- Model instance ownership as a function `owner : Instance -> Server`.
-- Model simple consensus by restricting proposals: only `owner i` may propose non-`no-op` for instance `i`.
-- Separate chosen, learned, and committed states.
-- Keep `SKIP` as evidence produced by the owner, not as a majority certificate.
-- Model revocation with an ordinary higher-round Paxos Phase 1 safe-value predicate.
-- Treat FIFO as a hypothesis for the piggybacking optimizations only; the core safety of Coordinated Paxos should not depend on timing.
-
 ## Limitations
 - Byzantine Mencius is explicitly left open; the paper notes that skipping is not built on a quorum abstraction, making a Byzantine extension nontrivial.
 - If any server fails, Mencius may see temporarily reduced performance because every server owns an unbounded number of instances.

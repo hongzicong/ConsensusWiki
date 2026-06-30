@@ -12,7 +12,6 @@ The wiki should help with:
 * extracting protocol mechanisms,
 * comparing protocols by technical dimensions,
 * identifying quorum, fast-path, recovery, and proof rules,
-* preparing Rocq/Coq models,
 * collecting ideas for new consensus protocols.
 
 ## Important rules
@@ -88,8 +87,6 @@ wiki/
   proof-notes/
     quorum-intersection.md
     adopt-commit-abstraction.md
-    rocq-modeling-notes.md
-
   open-questions/
     new-protocol-ideas.md
     unresolved-confusions.md
@@ -211,10 +208,6 @@ status: ingested
 
 ## Relationship to other protocols
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-
 ## Limitations
 
 ## Open questions
@@ -275,8 +268,6 @@ tags:
 
 ## Differences from related protocols
 
-## Modeling notes
-
 ## Open questions
 
 ## Sources
@@ -298,7 +289,7 @@ Only create direct A-vs-B comparison pages when:
 * the user explicitly asks,
 * the protocols are commonly confused,
 * the distinction is subtle and important,
-* the comparison is useful for formal modeling or new protocol design.
+* the comparison is useful for new protocol design.
 
 ## Protocol catalog
 
@@ -456,25 +447,6 @@ Always identify:
 * how a safe value is selected,
 * what invariant recovery preserves.
 
-### Formal modeling
-
-When useful, extract:
-
-* abstract state,
-* message types,
-* local transition function,
-* commit condition,
-* quorum assumptions,
-* desired invariants,
-* likely proof obligations,
-* known pitfalls.
-
-Distinguish between:
-
-* the real paper protocol,
-* a simplified abstraction,
-* a Rocq/Coq model.
-
 ## Query workflow
 
 When the user asks a question:
@@ -571,5 +543,3 @@ When asked to ingest a paper, perform the ingest workflow.
 When asked to compare protocols, use protocol catalog, dimension pages, and family pages before creating pairwise comparisons.
 
 When asked to brainstorm, perform the brainstorm workflow.
-
-When asked to prepare material for Rocq/Coq, focus on state, messages, transition rules, quorum assumptions, invariants, and proof obligations.

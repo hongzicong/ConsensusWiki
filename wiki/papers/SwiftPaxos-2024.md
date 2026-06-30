@@ -81,11 +81,6 @@ The proof defines `acc(b,id,c,P)` for accepted dependency paths by a fast or slo
 ## Relationship to other protocols
 SwiftPaxos is closely related to [[EPaxos]] through dependencies, to [[FastPaxos|Fast Paxos]] through fast-quorum reasoning, and to classic Paxos through ballots and leader recovery.
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-Model dependency paths, not only direct dependency sets. Prove acyclicity as a first-class invariant.
-
 ## Limitations
 Message complexity is quadratic. The extracted PDF text did not expose full bibliographic metadata; venue/authors need verification from the PDF front matter.
 

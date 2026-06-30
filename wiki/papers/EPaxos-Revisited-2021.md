@@ -70,11 +70,6 @@ The reevaluation differs from the original EPaxos evaluation by measuring execut
 - The dependency-chain fix significantly reduces tail latency for highly skewed write-heavy workloads.
 - Batching increases throughput but can sharply increase conflict rate and latency because a batch conflicts if any operation inside it conflicts.
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-Separate the safety proof of EPaxos tuples from performance-oriented assumptions about dependency graph traversal. The pruning rule needs a lemma showing that a pruned dependency necessarily executes after the current instance.
-
 ## Limitations
 The paper does not re-prove EPaxos recovery correctness. It also notes that throughput measurements are sensitive to implementation artifacts, including scheduler behavior and implementation-specific execution scanning.
 

@@ -111,11 +111,6 @@ original EPaxos fast quorum: n - e = f + floor((f + 1)/2)
 ## Relationship to other protocols
 EPaxos* is a corrected descendant of [[EPaxos]]. It keeps the leaderless dependency-graph idea, removes the sequence-number machinery from the presentation, and replaces original EPaxos recovery's tentative pre-accept phase with validation. It is closer to Paxos than original EPaxos in its use of two ballot variables, `bal` and `abal`.
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-Model command identifiers separately from payloads, and make `Nop` explicit. The main proof split is instance agreement for `(cmd, dep)` and visibility for conflicting committed commands. Recovery should be modeled as evidence selection plus a validation predicate; do not model validation as a state-changing tentative pre-accept.
-
 ## Limitations
 The protocol deliberately omits the original EPaxos optimization that returns early for commands without return values, because applying it directly can violate linearizability and requires extra mitigations. Liveness is stated for executions with finitely many submitted commands.
 

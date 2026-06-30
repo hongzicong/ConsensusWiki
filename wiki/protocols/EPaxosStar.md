@@ -93,13 +93,6 @@ Eventually stable per-command recovery coordinators keep retrying until commands
 ## Differences from related protocols
 Compared with [[EPaxos]], EPaxos* removes sequence numbers from the core dependency-graph presentation, uses `bal` and `abal`, and replaces tentative pre-accept recovery with validation. Compared with [[FastPaxos]], the fast evidence is not just a value vote but dependency metadata that must preserve visibility among conflicting commands.
 
-## Modeling notes
-For formal models, separate:
-- commit evidence for one command identifier,
-- dependency visibility among conflicting committed commands,
-- execution over committed dependency SCCs,
-- recovery validation and `Waiting` cycle-breaking.
-
 ## Open questions
 - TODO: Build a small Rocq/Coq abstraction of the validation predicate and prove it preserves visibility.
 - TODO: Decide how to represent the thrifty variant separately, if needed.

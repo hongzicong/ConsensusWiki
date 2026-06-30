@@ -74,9 +74,6 @@ Correct servers keep advancing their owned instance index, idle coordinators ski
 ## Differences from related protocols
 Unlike [[FastPaxos]], Mencius avoids fast-round collisions by preassigning instance coordinators. Unlike [[EPaxos]] and [[SwiftPaxos]], it does not make dependency metadata the core consensus object; dependencies are only used for optional out-of-order commit.
 
-## Modeling notes
-Model ownership and `no-op` restriction first. Add skip piggybacking, revocation batching, and out-of-order commit only after the base simple-consensus sequence is correct.
-
 ## Open questions
 - TODO: Extract pseudocode details from the technical report [[Mencius-2008]] references if it is added to `raw/`.
 

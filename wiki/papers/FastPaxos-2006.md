@@ -80,11 +80,6 @@ The key invariant is that a higher round cannot choose a value different from a 
 ## Relationship to other protocols
 [[FastPaxos|Fast Paxos]] is a base for later fast-consensus and leaderless/near-leaderless systems such as [[EPaxos]], [[SwiftPaxos]], and [[Pando]].
 
-## Modeling notes
-
-### Rocq/Coq modeling notes
-Model rounds, quorum families, accepted votes, and a `pickable` predicate for the phase 2a rule. The hardest obligation is the fast-round quorum intersection case.
-
 ## Limitations
 Fast latency is not guaranteed under collisions. Implementation choices for recovery and message routing affect cost.
 
