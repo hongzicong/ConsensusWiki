@@ -1,0 +1,4 @@
+interface:
+  display_name: "Defect-Driven Consensus Brainstorm"
+  short_description: "Derive SMR ideas from protocol limitations"
+  default_prompt: "Use $defect-driven-consensus-brainstorm to reread the wiki and propose defect-driven SMR/consensus protocol ideas."

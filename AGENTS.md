@@ -476,13 +476,9 @@ Prefer this answer structure:
 
 ## Brainstorm workflow
 
-When asked to reread the wiki and propose new protocol ideas:
+When asked to reread the wiki and propose new SMR/consensus protocol ideas, use the project skill at `.agents/skills/defect-driven-consensus-brainstorm`.
 
-1. Read `wiki/index.md`, `wiki/comparisons/protocol-catalog.md`, relevant comparison pages, proof notes, and existing open questions.
-2. Ground ideas in cited wiki pages; do not invent paper claims that are not already supported.
-3. Update `wiki/open-questions/new-protocol-ideas.md` with concise sections covering motivation, source mechanisms, design sketch, proof obligations, risks, and TODOs.
-4. Mark speculative parts clearly as `Idea`, `Hypothesis`, `TODO`, or `Unclear`.
-5. Update `wiki/index.md` if the idea page changes meaningfully.
+Short prompts such as "brainstorm new consensus ideas", "generate 100 defect-driven protocol candidates", or "find common weaknesses and propose ideas" should trigger that skill.
 
 ## Lint workflow
 
@@ -541,5 +537,3 @@ After editing the wiki:
 When asked to ingest a paper, perform the ingest workflow.
 
 When asked to compare protocols, use protocol catalog, dimension pages, and family pages before creating pairwise comparisons.
-
-When asked to brainstorm, perform the brainstorm workflow.

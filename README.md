@@ -51,7 +51,5 @@ Please ingest the paper of XXX.
 ## How to Brainstorm New Ideas?
 
 ```text
-Brainstorm 100 novel SMR/consensus protocol candidates across diverse design dimensions. For each idea, state its core mechanism, expected advantage, main risk, and closest related protocols.
-
-Important constraints: focus on fast-path designs that preserve 1-RTT commit latency, as in EPaxos and SwiftPaxos. The fast quorum size should be no larger than that of EPaxos or SwiftPaxos; do not propose ideas that gain novelty mainly by increasing latency or requiring larger fast quorums.
+Reread the wiki and brainstorm 100 defect-driven SMR protocol candidates.
 ```
