@@ -1,143 +1,641 @@
 ---
 type: open-questions
-tags: [ideas, protocol-design, smr, consensus]
+tags: [brainstorm, fast-path, smr, consensus, protocol-design]
 status: speculative
 ---
 
 # New Protocol Ideas
 
-This page is a speculative design notebook. Entries below are `Idea`, not paper claims. They are grounded in mechanisms already extracted in the wiki, especially [[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[Mencius]], and [[Pando]].
+This page collects speculative SMR/consensus protocol candidates. These are not paper claims. They are design sketches grounded in [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[FastPaxos]], [[Mencius]], [[Pando]], [[fast-path]], [[quorum]], [[recovery]], and [[quorum-intersection]].
 
-## Source mechanisms
+## Shared Constraints
 
-- [[FastPaxos]]: fast rounds, collision recovery, and quorum triple-intersection constraints.
-- [[EPaxos]]: command leaders, dependency metadata, fast commit on matching attributes, and execution delay under conflict.
-- [[EPaxosStar]]: separate `e` and `f` budgets, fast quorums `n - e`, recovery quorums `n - f`, and validation-based recovery.
-- [[SwiftPaxos]]: leader-including fast quorums, dependency paths, SlowAck repair, and acyclic committed dependency graphs.
-- [[Mencius]]: deterministic slot ownership, rotating coordinators, `SKIP`, revocation, and optional commutativity-aware execution.
-- [[Pando]]: erasure-coded evidence, separate discovery and recovery quorums, and reconstructability as a safety condition.
+- Target: 1-RTT fast commit from command propagation to commit evidence, in the same sense as [[EPaxos]]/[[EPaxosStar]] and [[SwiftPaxos]] fast paths.
+- Fast quorum budget: no larger than the EPaxos-style `n = 2f + 1`, `e = ceil((f + 1)/2)`, fast quorum `n - e = f + floor((f + 1)/2)` or SwiftPaxos C1/C2 fast-quorum envelope already recorded in [[quorum-systems]].
+- Novelty should come from metadata, routing, conflict prediction, recovery evidence, dependency structure, or execution rules, not from increasing latency or simply requiring larger fast quorums.
+- Safety obligations remain TODO unless explicitly derived: agreement for each command/instance, visibility/order for conflicting commands, acyclic or SCC-safe execution, and recoverability from slow/recovery quorums.
 
-## 100 Candidate SMR/Consensus Protocols
+## Candidate Ideas
 
-| # | Candidate | Core mechanism | Expected advantage | Main risk | Closest related protocols |
-|---|---|---|---|---|---|
-| 1 | Idea: Conflict-Class Anchored EPaxos | Route each key or conflict class through a small anchor included in fast quorums, while command leaders remain distributed. | Keeps EPaxos locality while making conflicting dependency evidence easier to recover. | Hot anchors can become bottlenecks or single liveness chokepoints. | [[EPaxos]], [[SwiftPaxos]] |
-| 2 | Idea: Elastic `e`-Fast SMR | Dynamically lower or raise the fast-path failure budget `e` per epoch and derive matching fast quorum sizes. | Trades latency against availability as failure risk changes. | Reconfiguration proof must show no epoch mix weakens recovery intersections. | [[EPaxosStar]], [[FastPaxos]] |
-| 3 | Idea: Mencius-with-Dependency Slots | Keep rotating slot ownership but let owners attach dependency sets so commutable commands can execute past owned-slot gaps. | Reduces head-of-line blocking in WAN multi-leader logs. | Dependency execution may undermine the simple total-slot proof. | [[Mencius]], [[EPaxos]] |
-| 4 | Idea: Swift SlowAck for EPaxos | Replace EPaxos slow Accept fallback with a SlowAck-style adoption of a leader or anchor dependency proposal. | Makes disagreement repair cheaper and more structured. | May import leader bottlenecks without actually fixing recovery corner cases. | [[EPaxos]], [[SwiftPaxos]] |
-| 5 | Idea: Coded Dependency Certificates | Store dependency certificates as erasure-coded fragments across replicas and reconstruct during recovery. | Reduces metadata storage and wide-area transfer cost for large dependency graphs. | Recovery now depends on both quorum and fragment-reconstruction invariants. | [[Pando]], [[EPaxos]], [[SwiftPaxos]] |
-| 6 | Idea: FastPaxos with Conflict Labels | Values carry conflict-class labels; fast collisions only force recovery when labels are non-commuting. | Avoids unnecessary fallback for independent proposals in one fast round. | Label soundness becomes part of safety. | [[FastPaxos]], [[EPaxos]] |
-| 7 | Idea: Leader-Including Fast Paxos | Require every Fast Paxos fast quorum to include the current coordinator or a coordinator witness. | Simplifies safe-value recovery and narrows collision ambiguity. | Fast path becomes less leaderless and more sensitive to coordinator delay. | [[FastPaxos]], [[SwiftPaxos]] |
-| 8 | Idea: Owner-Signed Skip Certificates | Extend Mencius `SKIP` with bounded certificates saying which future slots are intentionally empty. | Reduces skip chatter for idle owners. | False suspicion and revocation must safely override skip ranges. | [[Mencius]] |
-| 9 | Idea: Dependency Bloom Fast Path | Replicas exchange compact Bloom summaries of recent conflicts before PreAccept. | Lowers dependency-message size in large keyspaces. | False positives add dependencies; false negatives are unsafe unless impossible by construction. | [[EPaxos]], [[SwiftPaxos]] |
-| 10 | Idea: Recovery-First SMR | Design the normal path as a cached version of the recovery rule, so commit evidence is always directly recoverable. | Fewer special cases in proofs and models. | May sacrifice common-case latency to simplify rare paths. | [[EPaxosStar]], [[FastPaxos]] |
-| 11 | Idea: Dual-Track Commands | Send each command on a fast dependency track and a slower owned-slot track; first safe certificate wins. | Combines low latency with deterministic fallback ordering. | Duplicate tracks must not decide incompatible command identities. | [[EPaxos]], [[Mencius]] |
-| 12 | Idea: Per-Key Mini-Leaders | Elect tiny per-key leaders only for conflicting keys; independent commands stay leaderless. | Localizes leader cost to contention. | Multi-key commands need a deadlock-free leader composition rule. | [[EPaxos]], [[SwiftPaxos]] |
-| 13 | Idea: Fast-Path Non-Regression Gate | Allow fast commit only if new dependency metadata is a monotone extension of locally known committed dependencies. | Prevents fast evidence from hiding known conflicts. | Conservative gate may reject many otherwise safe fast commits. | [[EPaxosStar]], [[SwiftPaxos]] |
-| 14 | Idea: Witnessed Dependency Paths | Add lightweight witnesses that attest dependency paths are acyclic before fast execution. | Moves cycle detection earlier and may reduce execution stalls. | Witnesses need their own quorum/intersection proof. | [[SwiftPaxos]], [[EPaxos]] |
-| 15 | Idea: Quorum-Mode Switching | Switch between majority, fast, and leader-including quorum modes per workload phase. | Adapts to conflict rate and latency topology. | Mode transitions are likely the hardest part of the proof. | [[FastPaxos]], [[SwiftPaxos]], [[EPaxosStar]] |
-| 16 | Idea: Conflict-Rate Backpressure Consensus | Replicas expose conflict-rate signals; clients are steered to slow path or batching before fast-path collapse. | Improves tail latency under high contention. | Liveness and fairness may suffer if clients are throttled unevenly. | [[EPaxos-Revisited-2021]], [[EPaxos]] |
-| 17 | Idea: Geo-Nearest Fast Quorum | Pick fast quorums by latency region, but require recovery quorums to intersect all regional fast-quorum families. | Lowers WAN latency for regional workloads. | Flexible quorum algebra may become complex and workload-dependent. | [[FastPaxos]], [[EPaxosStar]] |
-| 18 | Idea: Coded Log Slots | Erasure-code log entries or certificates so recovery can reconstruct chosen commands from partial replicas. | Saves bandwidth for large commands and certificates. | Reconstructability must not be confused with consensus choice. | [[Pando]], [[Mencius]] |
-| 19 | Idea: Dependency Garbage Certificates | Commit certificates include enough proof to safely prune old dependencies from future messages. | Controls dependency graph growth. | A bad pruning rule can break execution ordering for delayed commands. | [[EPaxos-Revisited-2021]], [[SwiftPaxos]] |
-| 20 | Idea: Fast Quorum with Reserved Recoverers | Fast quorums must include a small set of designated recoverers that cache full evidence. | Makes recovery faster and cheaper. | Reserved recoverers may become availability bottlenecks. | [[SwiftPaxos]], [[EPaxosStar]] |
-| 21 | Idea: Multi-Anchor SwiftPaxos | Partition the dependency graph across several leaders/anchors, one per conflict domain. | Reduces single-leader pressure while keeping leader-including evidence. | Cross-domain commands require careful anchor ordering. | [[SwiftPaxos]], [[EPaxos]] |
-| 22 | Idea: Fast-Then-Validate Commit | Let clients observe optimistic fast evidence, but final commit waits for validation if conflicts appear. | Gives early responses for likely independent commands. | Client-visible semantics must distinguish tentative from committed. | [[EPaxosStar]], [[FastPaxos]] |
-| 23 | Idea: Majority Fast Path for Read-Mostly SMR | Use classic majority fast path only for read-only or commutative operations, with normal consensus for writes. | Very low latency for common read-like commands. | Classification errors can violate linearizability. | [[Mencius]], [[EPaxos]] |
-| 24 | Idea: Dependency Leasing | Replicas grant short leases for conflict classes; the lease holder can propose dependencies quickly. | Reduces coordination under temporary locality. | Lease timing assumptions must stay out of safety or be modeled explicitly. | [[leader]], [[EPaxos]], [[Mencius]] |
-| 25 | Idea: Recovery Quorum Caches | Replicas maintain rolling summaries of what a recovery quorum would report. | Speeds timeout recovery without changing commit rules. | Cache staleness must never substitute for real quorum evidence. | [[EPaxosStar]], [[Mencius]] |
-| 26 | Idea: Dependency DAG Fast Paxos | Treat each proposed value as a small DAG fragment rather than a scalar value. | Generalizes Fast Paxos collision into mergeable partial orders. | Merge safety is much harder than picking one value. | [[FastPaxos]], [[SwiftPaxos]] |
-| 27 | Idea: Slotless Mencius | Replace fixed slots with rotating ownership of sequence ranges in a dependency graph. | Preserves owner fairness while avoiding empty log gaps. | Harder to prove a unique global execution order. | [[Mencius]], [[EPaxos]] |
-| 28 | Idea: Commit-on-Path Intersection | Commit when dependency paths from a quorum intersect at a stable root command. | Uses path structure rather than full matching metadata. | Path intersection may be insufficient for agreement without extra constraints. | [[SwiftPaxos]] |
-| 29 | Idea: One-Shot Recovery Coordinators | Assign each failed instance a deterministic recovery coordinator based on instance id and ballot. | Avoids multiple recoverers racing. | Slow or failed recovery coordinator can delay progress unless revocation is clean. | [[EPaxos]], [[Mencius]] |
-| 30 | Idea: Flexible Conflict Quorums | Use larger quorums for hot keys and smaller quorums for cold, provably non-conflicting keys. | Matches cost to contention. | Requires a trusted or consensus-backed conflict classifier. | [[EPaxos]], [[FastPaxos]] |
-| 31 | Idea: Fast-Path Audit Trail | Each fast commit emits a compact audit object optimized for later recovery and model checking. | Makes safety evidence explicit and inspectable. | Extra metadata can erase latency gains. | [[EPaxosStar]], [[SwiftPaxos]] |
-| 32 | Idea: Conflict-Directed Reconfiguration | Move replicas or quorum weights toward observed conflict classes. | Improves fast-path success for real workload locality. | Reconfiguration and command agreement can interact badly. | [[quorum]], [[EPaxos-Revisited-2021]] |
-| 33 | Idea: Read-Repair SMR | Reads help disseminate missing commit and dependency certificates while preserving read linearizability. | Uses read traffic to heal lagging replicas. | Read path becomes more complex and may block. | [[Pando]], [[EPaxos]] |
-| 34 | Idea: Deterministic Dependency Tie-Breaker | Predefine a deterministic tie-break for concurrent conflicting commands so replicas converge without extra Accept phase when observations differ only by order. | Reduces slow-path frequency. | Tie-breaker must be proven compatible with all partial observations. | [[EPaxos]], [[Mencius]] |
-| 35 | Idea: Hierarchical Fast Quorums | Use local fast quorum inside a region plus global recovery quorum for cross-region safety. | Low regional latency with global fault tolerance. | Regional decisions may be unrecoverable if global intersections are too weak. | [[FastPaxos]], [[Pando]] |
-| 36 | Idea: Dependency Path Compression | Agree on hashes of dependency paths and fetch full paths only on recovery or execution blockage. | Shrinks normal-path messages. | Hash-only agreement complicates model checking and evidence reconstruction. | [[SwiftPaxos]], [[Pando]] |
-| 37 | Idea: Commit Certificates with Expiry Epochs | Certificates include epoch expiry conditions that force renewal before topology changes. | Avoids carrying stale quorum assumptions forever. | Renewal protocol may create availability cliffs. | [[quorum]], [[recovery]] |
-| 38 | Idea: Slow-Path Pipelined Validation | When fast evidence disagrees, start validation for dependent commands concurrently rather than sequentially. | Improves recovery latency for dependency chains. | Parallel validation can create recovery cycles. | [[EPaxosStar]], [[SwiftPaxos]] |
-| 39 | Idea: Coordinator-as-Conflict-Oracle | A coordinator suggests dependencies but replicas can fast-commit if their local evidence agrees or safely extends it. | Blends leader guidance with replica independence. | Oracle mistakes may cause frequent fallback. | [[SwiftPaxos]], [[EPaxos]] |
-| 40 | Idea: Anti-Entropy Consensus Layer | Background gossip continuously reconciles accepted/preaccepted metadata before failures happen. | Makes future recovery more likely to find complete evidence. | Safety must not rely on gossip delivery. | [[EPaxos]], [[Pando]] |
-| 41 | Idea: Quorum Intersection Synthesizer | Protocol chooses from a small verified library of quorum formulas at runtime based on `n`, `f`, `e`, and latency. | Reduces manual quorum engineering errors. | Runtime selection itself must be in the trusted model. | [[FastPaxos]], [[EPaxosStar]] |
-| 42 | Idea: Dependency-Safe Batching | Batch only commands whose internal dependency relation is known and attach the relation to the batch certificate. | Keeps batching from inflating false conflicts. | Incorrect batch conflict analysis can be unsafe. | [[EPaxos-Revisited-2021]], [[EPaxos]] |
-| 43 | Idea: Fast Commit with Deferred Execution Proof | Commit early, but execute only after a separately certified acyclicity/visibility proof arrives. | Separates agreement latency from execution readiness. | Users may confuse commit latency with operation latency. | [[EPaxos]], [[SwiftPaxos]] |
-| 44 | Idea: Replica-Local Command Leaders | Clients choose the nearest replica as command leader, but recovery assigns authority by deterministic hash. | Good locality without ambiguous recovery ownership. | Leader and recovery-owner split can introduce subtle races. | [[EPaxos]], [[Mencius]] |
-| 45 | Idea: Weighted Leader-Including Quorums | Give lower-latency or higher-reliability replicas more quorum weight, while every fast quorum includes a leader. | Better WAN latency than uniform sets. | Weighted intersection proofs are harder to audit. | [[SwiftPaxos]], [[quorum]] |
-| 46 | Idea: Fast-Path Conflict Escrow | Replicas reserve conflict-class capacity before accepting commands, allowing non-overlapping reservations to fast-commit. | Prevents some conflicts before they enter consensus. | Escrow state is itself replicated state that needs consensus. | [[EPaxos]], [[failure-model]] |
-| 47 | Idea: Recovery-Only Leader | Run leaderless fast path, but require a stable leader only for recovery and fallback. | Keeps common path decentralized. | Leader instability still hurts when conflicts are common. | [[FastPaxos]], [[EPaxos]] |
-| 48 | Idea: Dependency Witness Rotation | Rotate witness responsibility across replicas so each command has a small subset tracking full dependency paths. | Limits per-replica metadata load. | Losing witnesses may force expensive reconstruction. | [[SwiftPaxos]], [[Mencius]] |
-| 49 | Idea: Staged Fast Quorums | First gather a small discovery quorum; if no conflict hints appear, expand to fast quorum with a proposed clean dependency set. | Avoids sending large metadata to all fast-quorum replicas. | Discovery quorum cannot be treated as safety evidence. | [[Pando]], [[EPaxos]] |
-| 50 | Idea: Skip-as-Negative-Dependency | Model idle-slot `SKIP` as a negative dependency certificate that future commands can depend on. | Unifies Mencius gaps with dependency execution. | Could blur no-op evidence with real ordering evidence. | [[Mencius]], [[EPaxos]] |
-| 51 | Idea: Topology-Aware Command Routing | Route commands to leaders or anchors that maximize overlap with likely fast quorums. | Raises fast-path success in WAN deployments. | Routing policy may become stale or adversarially bad. | [[EPaxos-Revisited-2021]], [[SwiftPaxos]] |
-| 52 | Idea: Two-Level Recovery Evidence | Recovery first decides whether any fast commit was possible, then separately validates dependency visibility. | Cleaner proof decomposition. | Extra phase may increase recovery latency. | [[EPaxosStar]], [[FastPaxos]] |
-| 53 | Idea: Per-Command Quorum Tags | Each command records the quorum family used to commit it, enabling precise recovery instead of worst-case recovery. | Avoids over-conservative recovery rules. | Tags must be authenticated and preserved through reconfiguration. | [[quorum]], [[recovery]] |
-| 54 | Idea: Commutativity-Aware Fast Paxos | Acceptors can accept multiple fast-round values if a deterministic commutativity predicate says they can co-exist. | Generalizes single-value choice to sets of compatible operations. | Agreement object becomes a set/order, not a single value. | [[FastPaxos]], [[Mencius]] |
-| 55 | Idea: Fast-Path Shadow Ballots | Replicas attach a shadow ballot to fast evidence so later leaders can rank incomplete fast attempts. | Makes safe-value selection less ambiguous. | Shadow ballots may reintroduce Paxos phase complexity. | [[FastPaxos]], [[SwiftPaxos]] |
-| 56 | Idea: Dependency Graph Checkpoints | Periodically agree on a checkpointed dependency frontier and let new commands depend on the frontier hash. | Bounds old dependency metadata. | Checkpoint agreement becomes another consensus stream. | [[EPaxos]], [[SwiftPaxos]] |
-| 57 | Idea: Validation Quorum Sampling | Recovery samples multiple small validation sets whose union must satisfy the same intersection property as a recovery quorum. | May reduce recovery latency in large clusters. | Sampling must be deterministic or certificate-backed to be safe. | [[EPaxosStar]], [[quorum]] |
-| 58 | Idea: Leaderless Coded Storage SMR | Store command payloads coded like Pando but agree only on command ids and dependency metadata. | Lowers payload bandwidth while keeping SMR semantics. | Payload availability becomes separate from command agreement. | [[Pando]], [[EPaxos]] |
-| 59 | Idea: Fast Quorum Failure Forecasting | Use failure suspicion to choose a smaller `e` or safer quorum mode before replicas actually fail. | Maintains availability under predicted degradation. | Suspicion must not affect safety assumptions. | [[EPaxosStar]], [[failure-model]] |
-| 60 | Idea: Dependency-Repair Messages | Add a repair message that can only add dependencies, never replace accepted command identity. | Simple monotonic fallback after partial fast disagreement. | May over-depend and create large strongly connected components. | [[SwiftPaxos]], [[EPaxos]] |
-| 61 | Idea: Tokenized Conflict Domains | Commands acquire logical tokens for conflict domains, and token order determines dependencies. | Reduces pairwise conflict discovery cost. | Token consensus may become the real bottleneck. | [[Mencius]], [[EPaxos]] |
-| 62 | Idea: Fast Read-After-Write Certificates | Writes emit read-optimized certificates so later reads can complete via small discovery quorums. | Faster linearizable reads in SMR-backed storage. | Read certificates must survive leader changes and incomplete writes. | [[Pando]], [[FastPaxos]] |
-| 63 | Idea: Locality-Preserving Recovery | Recovery coordinator is chosen near the original command leader unless safety requires escalation. | Reduces WAN recovery cost for local failures. | Local recovery may miss evidence without strict quorum rules. | [[EPaxos]], [[EPaxosStar]] |
-| 64 | Idea: Epoch-Scoped Dependency Universes | Each epoch has a closed set of possible dependency identifiers; recovery can reason over absence within that set. | Makes validation of missing conflicts easier. | Epoch boundary protocol may be expensive. | [[EPaxosStar]], [[recovery]] |
-| 65 | Idea: Fast Path with Conflict Hints Only | First round agrees on command plus conflict hints; exact dependencies are finalized only if hints disagree. | Smaller common-case metadata. | Hints may be too weak for safety unless carefully constrained. | [[EPaxos]], [[SwiftPaxos]] |
-| 66 | Idea: Deterministic Client Sequencing | Clients include deterministic sequence hints for their own command streams; replicas use them as dependencies. | Improves order stability for client-local conflicts. | Byzantine or buggy clients are outside current non-Byzantine assumptions unless checked. | [[Mencius]], [[EPaxos]] |
-| 67 | Idea: Majority-Safe Fast Subprotocols | Run tiny Fast Paxos instances inside conflict domains, then compose their outputs through dependency SMR. | Localizes fast collisions. | Composition of per-domain decisions may violate cross-domain atomicity. | [[FastPaxos]], [[EPaxos]] |
-| 68 | Idea: Recoverable Optimistic Execution | Replicas execute after tentative fast evidence but expose results only after a recoverability certificate. | Hides execution latency behind consensus latency. | Rollback or side-effect isolation must be strict. | [[EPaxos]], [[recoverability]] |
-| 69 | Idea: Quorum-Stamped Dependencies | Every dependency edge records the quorum evidence that observed it. | Recovery can distinguish strong edges from speculative edges. | Edge certificates can explode in size. | [[SwiftPaxos]], [[EPaxosStar]] |
-| 70 | Idea: Partial-Order Mencius | Each owner proposes a local chain; consensus merges chains by owner order plus conflicts. | Natural fit for multi-leader geo workloads. | Merge rule may become as complex as dependency consensus. | [[Mencius]], [[EPaxos]] |
-| 71 | Idea: Conflict-Predictive PreAccept | Replicas precompute likely dependency sets from recent history and include prediction confidence. | Improves matching PreAccept replies under stable workloads. | Wrong predictions may increase dependencies or slow-path rate. | [[EPaxos-Revisited-2021]], [[EPaxos]] |
-| 72 | Idea: Fast-Path Certificate Coalescing | Combine certificates for adjacent independent commands into one quorum object. | Reduces certificate overhead for bursts. | Coalesced evidence must still support per-command recovery. | [[EPaxos]], [[Mencius]] |
-| 73 | Idea: Recovery DAG Search | Treat recovery as a bounded search over possible dependency DAGs consistent with evidence. | More precise than committing `Nop` too often. | Search may be expensive and hard to model. | [[EPaxosStar]], [[SwiftPaxos]] |
-| 74 | Idea: Replica Role Specialization | Some replicas specialize as fast responders, others as archival recoverers, with quorum formulas covering both. | Optimizes hardware and geography heterogeneity. | Availability proof must cover role failures. | [[Pando]], [[SwiftPaxos]] |
-| 75 | Idea: Commit-Rule Negotiation | Clients can request latency, availability, or metadata-cost profiles; replicas choose a compatible commit rule. | Allows application-aware consensus service levels. | Multiple commit rules increase state-space and operator confusion. | [[quorum-systems]], [[commit-rules]] |
-| 76 | Idea: Fast Path with Negative Acks | Replicas send explicit conflict-negative acknowledgements that can be used as evidence of absence. | Helps validate conflict-free commands. | Absence evidence is fragile under message delay and incomplete knowledge. | [[EPaxosStar]], [[EPaxos]] |
-| 77 | Idea: Conflict-Class Rebalancing via Skips | Idle owners in Mencius donate future slots to hot conflict classes through certified skip ranges. | Adapts static owner rotation to skew. | Donation and revocation can conflict. | [[Mencius]], [[leader]] |
-| 78 | Idea: Fast-Quorum Sticky Clients | Clients stick to a fast quorum family while locality is good, then migrate through certified handoff. | Better cache locality and stable dependency observations. | Sticky quorums may be vulnerable to correlated failures. | [[FastPaxos]], [[EPaxos]] |
-| 79 | Idea: Dependency SCC Commit Certificates | Commit whole strongly connected components with one certificate after detecting cycles. | Reduces execution blocking from cyclic dependencies. | SCC formation may delay unrelated commands if too coarse. | [[EPaxos]], [[SwiftPaxos]] |
-| 80 | Idea: Proof-Carrying Consensus Messages | Messages include machine-checkable proof terms or proof hints for quorum and dependency obligations. | Eases Rocq/Coq model extraction and debugging. | Runtime overhead and proof-term trust boundary. | [[rocq-modeling-notes]], [[quorum-intersection]] |
-| 81 | Idea: Adaptive Owner Rotation | Mencius owners rotate according to measured load, but changes are themselves committed as log entries. | Better balance than fixed modulo ownership. | Reconfiguration entries can block the very slots they try to rebalance. | [[Mencius]] |
-| 82 | Idea: Safe-Value Lattice Consensus | Replace single safe-value choice with a lattice join over compatible command metadata. | May merge concurrent proposals instead of choosing one. | Need a validity rule preventing unsafe joins. | [[FastPaxos]], [[EPaxos]] |
-| 83 | Idea: Cross-Shard Dependency Anchors | Multi-shard commands create anchor certificates shared by involved shards. | Avoids separate two-phase commit above SMR. | Anchor failure can block multiple shards. | [[SwiftPaxos]], [[EPaxos]] |
-| 84 | Idea: Certificate-First Client API | Clients receive a certificate object and decide when to wait for execution, replication, or recovery strength. | Exposes useful latency tiers. | API complexity and risk of clients treating weak certificates as final. | [[commit-rules]], [[recoverability]] |
-| 85 | Idea: Fast Path Over Stable Core | Maintain a small stable core in all fast quorums, with flexible edge replicas for latency. | Simplifies recovery while preserving some geographic flexibility. | Core replicas become bottlenecks and correlated-failure risk. | [[SwiftPaxos]], [[FastPaxos]] |
-| 86 | Idea: Dependency Delta Accept | Slow path accepts only the delta from the fast dependency set, not a full replacement. | Cheaper fallback and monotonic proof shape. | Delta semantics may be subtle when commands are recovered out of order. | [[EPaxos]], [[SwiftPaxos]] |
-| 87 | Idea: Evidence-Aware Load Balancing | Load balancer tracks which replicas already hold evidence for a command class and routes related commands there. | Improves cache hits and dependency matching. | Can concentrate load and reduce fault diversity. | [[EPaxos-Revisited-2021]], [[Pando]] |
-| 88 | Idea: Time-Bucketed Dependency Windows | Commands only search for conflicts in bounded logical time buckets, with bucket-close certificates. | Bounds dependency scanning. | Bucket boundaries must preserve real-time order for linearizability. | [[EPaxos]], [[linearizability]] |
-| 89 | Idea: Fast Reproposal After `Nop` | If recovery commits `Nop`, automatically repropose the original command with inherited dependency hints. | Reduces user-visible failure from conservative recovery. | Reproposal can duplicate side effects if command identity is mishandled. | [[EPaxosStar]], [[Mencius]] |
-| 90 | Idea: Quorum-Intersection Types | Encode quorum families as static types in the implementation or model, preventing invalid commit predicates. | Catches protocol bugs early. | Type abstraction may hide dynamic reconfiguration cases. | [[rocq-modeling-notes]], [[quorum-intersection]] |
-| 91 | Idea: WAN-Tiered Slow Path | Fast path is global; slow path first tries regional repair, then global recovery. | Reduces slow-path penalty for localized disagreement. | Regional repair must not decide values unrecoverable globally. | [[SwiftPaxos]], [[Pando]] |
-| 92 | Idea: Conflict Graph Snapshots in Checkpoints | State-machine checkpoints include the dependency frontier needed to validate later recoveries. | Simplifies restart and catch-up. | Snapshot proof must connect application state to consensus metadata. | [[EPaxos]], [[rocq-modeling-notes]] |
-| 93 | Idea: Precomputed Fast Quorum Families | Before workload starts, compute a small set of allowed fast quorums with known intersections and latency profiles. | Operationally simpler than arbitrary flexible quorums. | May perform poorly when failures hit the precomputed families. | [[FastPaxos]], [[SwiftPaxos]] |
-| 94 | Idea: Recoverable Client Proposals | Clients attach proposal histories or retransmission certificates so replicas can safely recover client intent. | Helps recover after command leader failure before full replication. | Client evidence should not replace replica quorum evidence. | [[FastPaxos]], [[EPaxos]] |
-| 95 | Idea: Dependency-Aware Failure Detector | Failure suspicion is scoped by dependency class, not whole replica identity. | Avoids global leader churn for localized stalls. | Failure detector outputs must remain liveness-only. | [[Mencius]], [[EPaxos]] |
-| 96 | Idea: Fast Commit by Compatible Majority Sets | Multiple majorities may commit compatible commands concurrently if their dependency certificates compose. | Higher concurrency than single-value majority consensus. | Compatibility composition is a large proof obligation. | [[FastPaxos]], [[EPaxos]] |
-| 97 | Idea: Recovery Certificate Marketplace | Replicas advertise missing evidence; peers provide fragments with verifiable provenance. | Accelerates recovery in large deployments. | Incentive-style mechanism is outside the current protocol model. | [[Pando]], [[recoverability]] |
-| 98 | Idea: Conflict-Oblivious Normal Path, Conflict-Aware Recovery | Normal path agrees on command ids quickly; recovery adds dependencies only if conflicts materialize. | Extremely low common-case metadata. | May be impossible to prove without strong conflict absence evidence. | [[FastPaxos]], [[EPaxosStar]] |
-| 99 | Idea: Layered SMR for Mixed Operations | Use separate subprotocols for read-only, commutative, single-key, and multi-key commands, joined by shared certificates. | Tailors cost to operation type. | Cross-layer ordering can become the hidden hard problem. | [[Mencius]], [[EPaxos]], [[Pando]] |
-| 100 | Idea: Minimal-Recovery Fast SMR | Optimize for the smallest recovery rule first, then derive the fastest normal path that produces exactly that evidence. | Could yield simpler, more modelable fast consensus designs. | May discover that the required evidence is too expensive for the target latency. | [[EPaxosStar]], [[FastPaxos]], [[SwiftPaxos]] |
+1. **Per-key fast anchors**
+   - Core mechanism: Assign each key or conflict class a lightweight SwiftPaxos-style anchor included in the relevant fast quorum; unrelated classes use different anchors.
+   - Expected advantage: Keeps 1-RTT commit while spreading leader-like coordination across hot-key partitions.
+   - Main risk: Cross-key transactions may need multiple anchors and could create dependency cycles.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxos]].
 
-## Cross-cutting proof obligations
+2. **Rotating dependency anchor**
+   - Core mechanism: Rotate the leader-in-fast-quorum anchor by command identifier while preserving a deterministic recovery owner for each identifier.
+   - Expected advantage: Avoids a fixed WAN leader bottleneck while retaining SwiftPaxos-style anchored evidence.
+   - Main risk: Recovery must prove that anchor changes cannot hide conflicting dependencies.
+   - Closest related protocols: [[SwiftPaxos]], [[Mencius]].
 
-- Define the agreed object before choosing quorums: value, command tuple, dependency set, dependency path, certificate, or coded fragment.
-- Prove every fast commit is recoverable by the stated recovery quorum.
-- Separate commit from execution readiness for dependency-based protocols.
-- Keep timing assumptions out of safety unless the protocol explicitly proves a timed safety condition.
-- For reconfiguration, prove that old and new quorum families intersect enough to preserve every still-recoverable decision.
-- For coded evidence, prove both value identity and fragment reconstructability.
+3. **Conflict-class command leaders**
+   - Core mechanism: Command leaders are chosen by conflict-class hash, not by submitting replica; the fast quorum stays EPaxos-sized.
+   - Expected advantage: Commands likely to conflict are observed in a consistent local order.
+   - Main risk: Misclassified commands can violate the assumptions behind the fast-path metadata.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
 
-## Risks and TODOs
+4. **Lease-free locality anchors**
+   - Core mechanism: Use deterministic region-preferred anchors without timing leases; all safety evidence is quorum based.
+   - Expected advantage: Improves common WAN latency for local clients without making safety depend on clocks.
+   - Main risk: Region skew may overload one anchor and increase slow-path frequency.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxosStar]].
 
-- TODO: Turn the strongest ideas into one-page sketches with explicit `n`, `f`, `e`, fast quorum, recovery quorum, and commit predicates.
-- TODO: Eliminate ideas whose safety requires unverifiable conflict classifiers.
-- TODO: Identify which candidates can be reduced to small executable models before attempting Rocq/Coq proofs.
-- TODO: Compare the most promising ideas against [[EPaxosStar]]'s optimized bound `n >= max{2e + f - 1, 2f + 1}` where applicable.
+5. **Client-chosen anchor hints**
+   - Core mechanism: Clients include an anchor hint derived from recent conflict observations; replicas verify the hint before using the 1-RTT path.
+   - Expected advantage: Lets clients steer hot commands toward the best fast-path coordinator without protocol-level reconfiguration.
+   - Main risk: Bad hints may amplify conflicts or create denial-of-service-like hotspots.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
 
-## Related pages
+6. **Two-dimensional anchors**
+   - Core mechanism: Anchor fast evidence by both key range and operation type, such as read-modify-write versus blind write.
+   - Expected advantage: Reduces unnecessary dependencies among operations that share keys but commute.
+   - Main risk: The commutativity classifier becomes part of the safety-critical trusted logic.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
 
-[[protocol-catalog]], [[quorum-systems]], [[fast-paths]], [[recovery-rules]], [[commit-rules]], [[conflict-handling]], [[proof-techniques]], [[quorum-intersection]], [[rocq-modeling-notes]]
+7. **Dependency micro-leaders**
+   - Core mechanism: A command leader delegates only dependency computation to a micro-leader, while commit evidence still comes from a normal fast quorum.
+   - Expected advantage: Separates metadata coordination from full command leadership.
+   - Main risk: Need recovery rules for cases where command and dependency leaders disagree or crash.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+8. **Witnessed command leaders**
+   - Core mechanism: Each command leader attaches a small witness set of recent conflicting commands; fast-quorum members verify only the witness boundary.
+   - Expected advantage: May reduce dependency divergence without increasing quorum size.
+   - Main risk: A witness boundary that is too small may omit a conflicting command needed for visibility.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+9. **Leaderless anchored recovery**
+   - Core mechanism: Fast path stays EPaxos-style leaderless, but every fast certificate records a deterministic recovery anchor.
+   - Expected advantage: Keeps distributed fast submission while simplifying failed-command recovery.
+   - Main risk: The recovery anchor may not have seen enough fast evidence to validate safely.
+   - Closest related protocols: [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]].
+
+10. **Quorum-role specialization**
+   - Core mechanism: Within an EPaxos-sized fast quorum, some replicas specialize as dependency observers and others as recovery witnesses, but all vote once.
+   - Expected advantage: Adds structure to evidence without changing quorum cardinality.
+   - Main risk: Role imbalance may weaken intersections unless the proof tracks role membership exactly.
+   - Closest related protocols: [[EPaxosStar]], [[Pando]].
+
+11. **Prefix-compressed dependencies**
+   - Core mechanism: Fast acknowledgements carry a compact dependency frontier per conflict class instead of explicit dependency sets.
+   - Expected advantage: Reduces message size and makes matching fast acknowledgements more likely.
+   - Main risk: Frontier compression must be injective enough for recovery to reconstruct omitted commands.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+12. **Version-vector dependency path**
+   - Core mechanism: Replace direct dependency sets with per-class version vectors that imply dependency paths.
+   - Expected advantage: Gives SwiftPaxos-like path evidence with fixed-size metadata for bounded classes.
+   - Main risk: Dynamic key sets and cross-class commands may make vectors large or ambiguous.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxos]].
+
+13. **Bloom-filter dependency precheck**
+   - Core mechanism: Replicas include Bloom filters for recent conflicting commands; false positives add dependencies, never remove them.
+   - Expected advantage: Preserves safety while cheaply detecting likely conflicts in 1 RTT.
+   - Main risk: False positives may create dependency chains and hurt execution latency.
+   - Closest related protocols: [[EPaxos]], [[EPaxos-Revisited-2021]].
+
+14. **Merkle dependency certificates**
+   - Core mechanism: Fast acknowledgements commit to a Merkle root of observed dependencies plus proofs for conflicts queried during recovery.
+   - Expected advantage: Keeps fast messages small while giving recovery auditable evidence.
+   - Main risk: Recovery may become expensive or block on missing proofs.
+   - Closest related protocols: [[EPaxosStar]], [[Pando]].
+
+15. **Conflict-frontier intervals**
+   - Core mechanism: Track dependencies as intervals over per-key logical clocks rather than command identifiers.
+   - Expected advantage: Compresses dense hot-key workloads where many commands conflict.
+   - Main risk: Interval gaps can hide individual commands unless clocks are quorum-certified.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+16. **Typed dependency edges**
+   - Core mechanism: Edge labels distinguish read-after-write, write-after-read, and non-commuting write dependencies.
+   - Expected advantage: Execution can ignore edges that are irrelevant for a command's return value or state transition.
+   - Main risk: Incorrect edge weakening can break linearizability.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+17. **Return-value dependency split**
+   - Core mechanism: Commit one dependency set for state safety and a stricter read-dependency set only when return values require it.
+   - Expected advantage: Recovers some early-return benefits without treating all commands identically.
+   - Main risk: Must avoid the linearizability pitfalls noted for EPaxos* early-return optimizations.
+   - Closest related protocols: [[EPaxosStar]], [[EPaxos]].
+
+18. **Dependency age caps**
+   - Core mechanism: Fast acknowledgements include dependencies only above a quorum-certified stable frontier; older committed commands are summarized.
+   - Expected advantage: Prevents dependency metadata from growing with long-running systems.
+   - Main risk: Stable-frontier certificates may add background complexity and liveness coupling.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+19. **Negative dependency evidence**
+   - Core mechanism: Replicas explicitly certify "no known conflicting command after frontier X" in fast acknowledgements.
+   - Expected advantage: Helps recovery distinguish missing evidence from genuine absence.
+   - Main risk: Negative claims are hard to preserve under asynchronous message reordering.
+   - Closest related protocols: [[EPaxosStar]], [[FastPaxos]].
+
+20. **Conflict-oblivious fast value plus repair edge**
+   - Core mechanism: Commit a command fast with minimal dependencies, then require later conflicting commands to attach repair edges if they observed it.
+   - Expected advantage: Makes uncontended fast path very small.
+   - Main risk: If two conflicting commands commit without either observing the other, visibility fails.
+   - Closest related protocols: [[EPaxosStar]], [[FastPaxos]].
+
+21. **Validated fast quorum certificates**
+   - Core mechanism: Replicas fast-ack only after locally checking the EPaxos* validation predicate against already committed conflicts.
+   - Expected advantage: Moves some recovery validation into the fast path without extra round trips.
+   - Main risk: Pre-commit validation cannot see concurrently committing invalidators.
+   - Closest related protocols: [[EPaxosStar]], [[EPaxos]].
+
+22. **Deferred validation tokens**
+   - Core mechanism: Fast acknowledgements include tokens promising to validate the same dependency set during later recovery.
+   - Expected advantage: Recovery can identify which replicas are obligated to support the fast certificate.
+   - Main risk: Crashed token holders may be exactly the missing evidence.
+   - Closest related protocols: [[EPaxosStar]], [[FastPaxos]].
+
+23. **Nop-biased recovery**
+   - Core mechanism: Fast path is unchanged, but recovery aggressively chooses `Nop` when validation evidence is ambiguous and resubmits payloads.
+   - Expected advantage: Simplifies safety proof and may avoid recovery cycles.
+   - Main risk: Liveness and client-visible latency suffer under frequent false `Nop` recovery.
+   - Closest related protocols: [[EPaxosStar]].
+
+24. **Dependency-preserving Nop**
+   - Core mechanism: A recovered `Nop` still carries dependency metadata needed to preserve visibility.
+   - Expected advantage: Avoids losing ordering information when payload recovery is unsafe.
+   - Main risk: Need prove a metadata-only command cannot introduce execution anomalies.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+25. **Recovery by conflict witnesses**
+   - Core mechanism: Recovery quorums collect compact witness summaries for only commands that conflict with the recovering command.
+   - Expected advantage: Narrows recovery cost to the relevant conflict neighborhood.
+   - Main risk: Witness selection must be complete despite asynchronous dissemination.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+26. **Recoverable dependency roots**
+   - Core mechanism: Fast certificates commit to a root hash whose leaves are held by the fast-quorum replicas and reconstructible from a recovery quorum.
+   - Expected advantage: Combines small fast messages with Pando-like recoverability reasoning.
+   - Main risk: Hash roots do not by themselves prove semantic conflict coverage.
+   - Closest related protocols: [[Pando]], [[EPaxosStar]].
+
+27. **Two-ballot fast preaccept**
+   - Core mechanism: Keep 1-RTT fast commit, but every preaccept records separate join ballot and accepted ballot fields from the start.
+   - Expected advantage: Avoids EPaxos-style ballot ambiguity in recovery.
+   - Main risk: Extra state may not help unless recovery rules use it cleanly.
+   - Closest related protocols: [[EPaxosStar]], [[EPaxos]].
+
+28. **Fast certificate escrow**
+   - Core mechanism: Replicas store fast certificates for peers in a rolling escrow set selected by hash.
+   - Expected advantage: Recovery can find evidence even if several original fast-quorum members crash.
+   - Main risk: Escrow dissemination must not add latency to the fast commit.
+   - Closest related protocols: [[EPaxosStar]], [[Pando]].
+
+29. **Recovery-prioritized fast quorum**
+   - Core mechanism: Prefer fast quorums whose members maximize intersection with likely recovery majorities, without increasing size.
+   - Expected advantage: Improves practical recoverability after regional failures.
+   - Main risk: Quorum preference can create correlated failure exposure.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxosStar]].
+
+30. **Conflict-cycle recovery breaker**
+   - Core mechanism: Recovery detects cycles of mutually waiting conflicting commands and chooses a deterministic victim for `Nop` or slow accept.
+   - Expected advantage: Makes liveness behavior explicit under dependency recovery cycles.
+   - Main risk: Victim choice must preserve already possible fast commits.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+31. **Acyclic fast dependency rule**
+   - Core mechanism: Replicas fast-ack only if adding the command's dependencies preserves a locally known acyclic graph.
+   - Expected advantage: Reduces SwiftPaxos-style cycle repair after commit.
+   - Main risk: Local acyclicity does not imply global acyclicity under partial knowledge.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxos]].
+
+32. **SCC-first execution protocol**
+   - Core mechanism: Commit dependencies fast as in EPaxos*, but design metadata for rapid SCC closure and execution.
+   - Expected advantage: Targets execution latency, not just commit latency.
+   - Main risk: Fast commit may remain 1 RTT while execution is delayed by missing SCC members.
+   - Closest related protocols: [[EPaxosStar]], [[EPaxos-Revisited-2021]].
+
+33. **Acyclic path certificates**
+   - Core mechanism: Fast acknowledgements include a path certificate proving the proposed dependencies do not close a known cycle.
+   - Expected advantage: Gives recovery stronger evidence about executable order.
+   - Main risk: Path certificates may grow with conflict graph depth.
+   - Closest related protocols: [[SwiftPaxos]].
+
+34. **Deterministic cycle orientation**
+   - Core mechanism: Conflicting concurrent commands always orient dependency edges by a deterministic rank unless one command was already committed.
+   - Expected advantage: Makes matching dependency metadata more likely.
+   - Main risk: Rank orientation can increase dependency chains for hot commands.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+35. **Two-level dependency graph**
+   - Core mechanism: Fast path commits class-level edges first and command-level edges only inside hot classes.
+   - Expected advantage: Shrinks metadata for mostly independent workloads.
+   - Main risk: Coarse class edges can serialize too much work.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+36. **Commutativity lattice protocol**
+   - Core mechanism: Model operations in a lattice of commutativity classes and require dependencies only at the lowest non-commuting join.
+   - Expected advantage: Captures more concurrency than binary conflict relations.
+   - Main risk: Application-specific lattice errors become safety bugs.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+37. **Read-stability fast path**
+   - Core mechanism: Reads fast-commit with a dependency frontier proving all writes they observe are committed or dependency-ordered.
+   - Expected advantage: Provides low-latency linearizable reads without a separate read lease.
+   - Main risk: Read return values require careful relation to command execution, not only commit.
+   - Closest related protocols: [[EPaxos]], [[Pando]].
+
+38. **Inverse-dependency acknowledgements**
+   - Core mechanism: Replicas can fast-ack by saying "this command is before these known conflicts" instead of only depending on prior conflicts.
+   - Expected advantage: Lets concurrent commands agree on order even when observed in opposite directions.
+   - Main risk: Recovery must merge before/after constraints without cycles.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+39. **Partial-order fast value**
+   - Core mechanism: The agreed value is a set of ordering constraints rather than a dependency set for one command.
+   - Expected advantage: May unify several concurrent commands in one 1-RTT certificate.
+   - Main risk: Per-command agreement becomes harder to define and recover.
+   - Closest related protocols: [[SwiftPaxos]], [[FastPaxos]].
+
+40. **Conflict-window batching**
+   - Core mechanism: Fast acknowledgements may contain a small ordered batch of mutually conflicting commands seen in the same window.
+   - Expected advantage: Converts collisions into a deterministic mini-order without extra latency.
+   - Main risk: Larger batch metadata may delay wide-area transmission and hurt tail latency.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+41. **Thrifty fast quorum with recovery padding**
+   - Core mechanism: Use a minimal EPaxos-style fast quorum for commit, but send asynchronous padding evidence to extra replicas after commit.
+   - Expected advantage: Keeps 1-RTT latency while improving later recovery.
+   - Main risk: Recovery immediately after commit may occur before padding arrives.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+42. **Topology-aware fast quorum selection**
+   - Core mechanism: Choose EPaxos-sized fast quorums by WAN latency while satisfying fixed intersection families.
+   - Expected advantage: Reduces common-case latency without changing quorum size.
+   - Main risk: Dynamic latency adaptation can accidentally violate quorum-family assumptions.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+43. **Fixed-majority fast island**
+   - Core mechanism: Use SwiftPaxos C2-like fixed majority fast quorums per shard, with different shards assigned to different majorities.
+   - Expected advantage: Achieves small fast quorums and predictable intersections.
+   - Main risk: A shard's fast availability depends on its fixed majority.
+   - Closest related protocols: [[SwiftPaxos]], [[Mencius]].
+
+44. **Flexible EPaxos-sized quorums**
+   - Core mechanism: Allow different fast-quorum families per conflict class while keeping each quorum no larger than EPaxos' fast quorum.
+   - Expected advantage: Tailors intersections to actual conflict topology.
+   - Main risk: Cross-class commands need intersection across multiple families.
+   - Closest related protocols: [[EPaxos]], [[quorum-intersection]].
+
+45. **Fast quorum colorings**
+   - Core mechanism: Color replicas and require each fast quorum to contain a fixed color profile rather than a larger cardinality.
+   - Expected advantage: Encodes geographical diversity and recovery intersection structurally.
+   - Main risk: Color-profile intersections may be insufficient for arbitrary failures.
+   - Closest related protocols: [[SwiftPaxos]], [[FastPaxos]].
+
+46. **Hotspot adaptive quorum family**
+   - Core mechanism: Hot conflict classes switch to fixed fast quorum families; cold classes use flexible leaderless quorums.
+   - Expected advantage: Reduces dependency disagreement where conflicts are frequent.
+   - Main risk: Switching rules must not leave ambiguous certificates during transitions.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+47. **Recovery-aware quorum rotation**
+   - Core mechanism: Rotate fast quorum membership only at epochs whose boundary is committed by a slow quorum.
+   - Expected advantage: Allows latency optimization while keeping recovery proof epoch-local.
+   - Main risk: Epoch changes can become a hidden slow-path bottleneck.
+   - Closest related protocols: [[SwiftPaxos]], [[Mencius]].
+
+48. **Client-proximal quorum choice**
+   - Core mechanism: For each command, pick the nearest valid fast quorum from a precomputed intersection-safe family.
+   - Expected advantage: Reduces client-perceived latency while preserving 1-RTT commit.
+   - Main risk: Workload concentration may make the nearest family overloaded.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+49. **Quorum certificates with role bits**
+   - Core mechanism: Fast certificates record which members served as leader/anchor, dependency observer, and recovery witness.
+   - Expected advantage: Lets recovery reason about evidence quality without larger quorums.
+   - Main risk: The proof must show role intersections, not just set intersections.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+50. **Availability-tiered fast quorums**
+   - Core mechanism: Prefer highly available replicas in fast quorums but require enough low-latency diversity for intersection.
+   - Expected advantage: Improves practical fast-path success under partial outages.
+   - Main risk: Availability scoring can become stale and concentrate risk.
+   - Closest related protocols: [[EPaxosStar]], [[Pando]].
+
+51. **Speculative read-through commit**
+   - Core mechanism: A client executes after collecting a fast certificate and dependency-ready proof from the same quorum.
+   - Expected advantage: Avoids waiting for a separate commit broadcast on read-heavy workloads.
+   - Main risk: Dependency-ready proof may be too strong to obtain in the same 1 RTT.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+52. **Fast certificate forwarding**
+   - Core mechanism: Fast-quorum members forward matching certificates directly to dependent commands' leaders.
+   - Expected advantage: Shortens execution waiting caused by missing transitive commits.
+   - Main risk: Forwarding is off the critical path but may create message storms.
+   - Closest related protocols: [[EPaxos-Revisited-2021]], [[SwiftPaxos]].
+
+53. **Execution-frontier acknowledgements**
+   - Core mechanism: Fast acknowledgements include each replica's committed/executable frontier for relevant conflict classes.
+   - Expected advantage: Command leaders can predict execution readiness before returning.
+   - Main risk: Frontier freshness is not guaranteed in an asynchronous system.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+54. **Dependency prefetch protocol**
+   - Core mechanism: On fast commit, replicas proactively fetch dependency certificates in parallel with commit dissemination.
+   - Expected advantage: Maintains 1-RTT commit while reducing post-commit execution stalls.
+   - Main risk: Prefetching may waste bandwidth on commands that later execute through slow SCCs.
+   - Closest related protocols: [[EPaxos-Revisited-2021]], [[SwiftPaxos]].
+
+55. **Client-visible commit/execution split**
+   - Core mechanism: Return 1-RTT fast commit with explicit "not yet executed" status for commands whose dependencies are unresolved.
+   - Expected advantage: Makes latency semantics honest for applications that can tolerate deferred execution.
+   - Main risk: Many SMR clients need return values, so this may be a narrow API.
+   - Closest related protocols: [[EPaxos]], [[EPaxosStar]].
+
+56. **Fast commutative apply**
+   - Core mechanism: Replicas immediately apply commands proven to commute with all unresolved dependencies.
+   - Expected advantage: Reduces execution delay without changing consensus evidence.
+   - Main risk: Requires a sound application-level commutativity proof.
+   - Closest related protocols: [[Mencius]], [[EPaxos]].
+
+57. **SCC hint certificates**
+   - Core mechanism: Fast acknowledgements include hints about likely SCC membership derived from local dependency graphs.
+   - Expected advantage: Speeds deterministic SCC execution after commit.
+   - Main risk: Hints must remain non-binding unless certified.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+58. **Return-value escrow**
+   - Core mechanism: For deterministic operations, replicas include tentative return values plus dependency evidence in fast acknowledgements.
+   - Expected advantage: Clients can return after 1 RTT when all tentative return values match.
+   - Main risk: Matching return values may mask different internal dependency justifications.
+   - Closest related protocols: [[EPaxos]], [[Pando]].
+
+59. **Read-only dependency bypass**
+   - Core mechanism: Read-only commands bypass dependency insertion if a fast quorum reports the same stable write frontier.
+   - Expected advantage: 1-RTT linearizable reads under stable workloads.
+   - Main risk: Concurrent writes between frontier observations can invalidate the read.
+   - Closest related protocols: [[Pando]], [[EPaxos]].
+
+60. **Fast irreversible prefix**
+   - Core mechanism: Replicas maintain a quorum-certified irreversible prefix per conflict class; commands below it need no explicit dependencies.
+   - Expected advantage: Cuts dependency size and execution wait.
+   - Main risk: Prefix certification may lag under high conflict.
+   - Closest related protocols: [[Mencius]], [[EPaxos]].
+
+61. **ML-guided dependency proposal**
+   - Core mechanism: A predictor suggests likely dependencies; replicas verify and can only add safety-preserving edges.
+   - Expected advantage: Improves fast acknowledgement matching for recurrent workloads.
+   - Main risk: Bad predictions may add excessive dependencies and harm tail latency.
+   - Closest related protocols: [[EPaxos]], [[EPaxos-Revisited-2021]].
+
+62. **Conflict-rate adaptive metadata**
+   - Core mechanism: Switch between explicit dependencies, frontiers, and batches based on observed conflict rate, without changing quorum size.
+   - Expected advantage: Matches metadata form to workload regime.
+   - Main risk: Mode changes need careful recovery compatibility.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+63. **Hot-key serialization hint**
+   - Core mechanism: For keys above a conflict threshold, replicas orient fast dependencies according to a shared hot-key sequence.
+   - Expected advantage: Reduces slow-path fallback on hot spots while preserving 1-RTT commit.
+   - Main risk: Hot-key sequencer may become a bottleneck or liveness dependency.
+   - Closest related protocols: [[Mencius]], [[EPaxos]].
+
+64. **Cold-key leaderless scatter**
+   - Core mechanism: Cold commands use EPaxos-style any-replica leadership with minimal dependency metadata.
+   - Expected advantage: Preserves egalitarian load distribution for low-conflict workloads.
+   - Main risk: Need smooth integration with hot-key modes.
+   - Closest related protocols: [[EPaxos]], [[EPaxosStar]].
+
+65. **Dynamic commutativity profiles**
+   - Core mechanism: Applications publish versioned commutativity profiles; fast acknowledgements include the profile version used.
+   - Expected advantage: Enables richer conflict avoidance without protocol rewrites.
+   - Main risk: Profile upgrades become safety-critical reconfiguration events.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+66. **Conflict sketch gossip**
+   - Core mechanism: Replicas continuously gossip compact conflict sketches so fast-path dependency proposals are more likely to match.
+   - Expected advantage: Improves 1-RTT success without adding messages to the critical path.
+   - Main risk: Stale sketches may add dependencies or mislead predictors.
+   - Closest related protocols: [[EPaxos-Revisited-2021]], [[SwiftPaxos]].
+
+67. **Topology-sensitive batching**
+   - Core mechanism: Batch only commands whose client-to-quorum latency profiles are similar and whose conflicts can be ordered deterministically.
+   - Expected advantage: Avoids batching-induced tail penalties noted for EPaxos-like systems.
+   - Main risk: Batch formation logic can add delay before the 1-RTT path begins.
+   - Closest related protocols: [[EPaxos-Revisited-2021]], [[Mencius]].
+
+68. **Fast-path admission control**
+   - Core mechanism: Replicas reject or slow-path commands predicted to cause dependency disagreement, preserving fast path for clean commands.
+   - Expected advantage: Raises fast-path success ratio for admitted commands.
+   - Main risk: Can starve hot commands unless fallback is fair.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+69. **Conflict-class backpressure**
+   - Core mechanism: Apply backpressure only to conflict classes whose fast certificates are frequently invalidated.
+   - Expected advantage: Keeps independent classes at 1-RTT latency.
+   - Main risk: Requires accurate attribution of slow-path causes.
+   - Closest related protocols: [[EPaxos-Revisited-2021]], [[Mencius]].
+
+70. **Predictive quorum pinning**
+   - Core mechanism: Pin fast-quorum choice for workload phases predicted to be stable.
+   - Expected advantage: Reduces dependency disagreement and cache misses in quorum members.
+   - Main risk: Pinning can hurt availability and fairness during phase changes.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxos]].
+
+71. **Shard-local fast SMR with global dependency bridge**
+   - Core mechanism: Each shard uses 1-RTT fast commit; cross-shard commands commit a bridge dependency record in each involved shard.
+   - Expected advantage: Keeps single-shard operations fast while making cross-shard ordering explicit.
+   - Main risk: Bridge records may require multi-shard atomic recovery.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+72. **Hierarchical conflict classes**
+   - Core mechanism: Commands first agree at a coarse class, then refine dependencies within sub-classes for execution.
+   - Expected advantage: Supports wide key ranges without fully serializing the system.
+   - Main risk: Coarse-class agreement may add unnecessary dependencies.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+73. **Cross-shard dependency receipts**
+   - Core mechanism: A shard can fast-ack a cross-shard command using receipts from other shards' fast certificates.
+   - Expected advantage: Avoids a second consensus round for common cross-shard cases.
+   - Main risk: Receipt freshness and atomic visibility need proof.
+   - Closest related protocols: [[EPaxos]], [[Pando]].
+
+74. **Commutative escrow commands**
+   - Core mechanism: Escrow-style operations reserve bounded resources with fast quorum evidence and commute within safe limits.
+   - Expected advantage: High-throughput 1-RTT commits for counters, quotas, and inventories.
+   - Main risk: Escrow invariant violations if reservations are recovered incorrectly.
+   - Closest related protocols: [[Mencius]], [[EPaxos]].
+
+75. **Hybrid log-DAG protocol**
+   - Core mechanism: Use per-shard logs for hot sequential classes and EPaxos-style DAG dependencies between shards/classes.
+   - Expected advantage: Combines simple execution in hot streams with concurrent independent streams.
+   - Main risk: Log-DAG boundary may be hard to recover safely.
+   - Closest related protocols: [[Mencius]], [[EPaxos]].
+
+76. **Region-local command families**
+   - Core mechanism: Commands whose keys are region-affine use a local fast quorum family; global commands use normal EPaxos/SwiftPaxos-sized quorums.
+   - Expected advantage: Improves WAN locality without changing safety assumptions.
+   - Main risk: Region-affinity mistakes can cause unexpected slow paths.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+77. **Dependency namespaces**
+   - Core mechanism: Dependencies are scoped by namespace, with explicit namespace-join commands for operations spanning scopes.
+   - Expected advantage: Reduces false conflicts across independent application domains.
+   - Main risk: Namespace joins become complex and may reintroduce global ordering.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+78. **Fast path for monotone data types**
+   - Core mechanism: Treat monotone updates as always commuting and agree only on compact causality metadata.
+   - Expected advantage: Very small 1-RTT certificates for CRDT-like subsets inside SMR.
+   - Main risk: Mixing monotone and non-monotone operations requires strict boundaries.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+79. **Multi-object deterministic rank**
+   - Core mechanism: Cross-object commands orient dependencies by a deterministic rank over involved object sets.
+   - Expected advantage: Avoids conflicting replicas choosing opposite dependency directions.
+   - Main risk: Rank can serialize large object sets and hurt concurrency.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]].
+
+80. **Fast conflict-class migration**
+   - Core mechanism: Move a hot class to a new anchor/quorum family using a slow-quorum-certified migration record, while other classes remain fast.
+   - Expected advantage: Supports load balancing without global reconfiguration.
+   - Main risk: Commands crossing the migration boundary need careful recovery.
+   - Closest related protocols: [[SwiftPaxos]], [[Mencius]].
+
+81. **Fast reconfiguration shadow quorum**
+   - Core mechanism: During reconfiguration, old and new fast quorums overlap through a shadow certificate no larger than the normal fast-quorum budget per configuration.
+   - Expected advantage: Maintains 1-RTT fast commits across membership changes.
+   - Main risk: Cross-configuration intersection proof is likely delicate.
+   - Closest related protocols: [[FastPaxos]], [[SwiftPaxos]].
+
+82. **Epoch-stamped dependency graph**
+   - Core mechanism: Dependencies carry epoch stamps; recovery validates only within relevant epochs plus certified boundary edges.
+   - Expected advantage: Limits recovery search during long runs and reconfigurations.
+   - Main risk: Boundary edges can be lost or under-specified.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+83. **Fast quorum health epochs**
+   - Core mechanism: Replicas publish health epochs; fast quorums are selected from the current health epoch without leases.
+   - Expected advantage: Avoids obviously slow or failed replicas in 1-RTT path.
+   - Main risk: Health views may diverge and break intended quorum-family constraints if not certified.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxosStar]].
+
+84. **Graceful degradation e-fast mode**
+   - Core mechanism: Dynamically lower the fast-path failure budget `e` during failures to keep `n - e` available, while preserving full `f` recovery.
+   - Expected advantage: Makes the EPaxos* `e`/`f` split operational.
+   - Main risk: Mode changes must be agreed before certificates can mix.
+   - Closest related protocols: [[EPaxosStar]].
+
+85. **Fast certificate format negotiation**
+   - Core mechanism: Replicas agree per epoch on dependency encoding formats, not on larger quorums or slower commit rules.
+   - Expected advantage: Enables experimentation with metadata without changing core quorum proof.
+   - Main risk: Mixed-format recovery may misinterpret old evidence.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+86. **Rolling recovery checkpoints**
+   - Core mechanism: Asynchronously checkpoint committed dependency graph cuts so recovery for later commands can ignore older graph regions.
+   - Expected advantage: Keeps recovery bounded while fast commits remain 1 RTT.
+   - Main risk: Checkpoints must be proved to preserve visibility and execution order.
+   - Closest related protocols: [[EPaxosStar]], [[Mencius]].
+
+87. **Fast quorum replacement certificates**
+   - Core mechanism: If a fast-quorum member becomes unavailable, a slow quorum certifies a replacement role for future commands only.
+   - Expected advantage: Avoids global reconfiguration for small failures.
+   - Main risk: Future-only replacement must not be confused with past fast evidence.
+   - Closest related protocols: [[SwiftPaxos]], [[FastPaxos]].
+
+88. **Region-failure-aware anchors**
+   - Core mechanism: Anchor assignment avoids placing all recovery-critical witnesses in one failure domain.
+   - Expected advantage: Improves recoverability after data-center outages without larger fast quorums.
+   - Main risk: Failure-domain assumptions may not match real correlated failures.
+   - Closest related protocols: [[SwiftPaxos]], [[Pando]].
+
+89. **Fast path with archival witnesses**
+   - Core mechanism: Non-voting archival witnesses receive fast certificates asynchronously and can help recovery but do not count in fast quorum size.
+   - Expected advantage: Improves auditability and recovery evidence without affecting latency.
+   - Main risk: Witnesses cannot be required for safety-critical fast commit.
+   - Closest related protocols: [[Pando]], [[EPaxosStar]].
+
+90. **Certificate garbage-collection protocol**
+   - Core mechanism: Garbage collect fast evidence only after a slow quorum certifies all dependent commands are committed or checkpointed.
+   - Expected advantage: Prevents recovery from losing needed evidence in long-running deployments.
+   - Main risk: GC certificates may grow or block under stuck dependencies.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+91. **Mechanized minimal core**
+   - Core mechanism: Design a protocol around a tiny adopt-commit-like fast-evidence abstraction, then compile to EPaxos-style dependencies.
+   - Expected advantage: Makes proof obligations explicit before optimizing implementation.
+   - Main risk: The abstraction may be too weak for real dependency recovery.
+   - Closest related protocols: [[adopt-commit-abstraction]], [[EPaxosStar]].
+
+92. **Recoverability-first fast design**
+   - Core mechanism: Start from the recovery selection predicate and permit only fast metadata that the predicate can reconstruct.
+   - Expected advantage: Avoids EPaxos-style recovery ambiguity by construction.
+   - Main risk: May rule out useful optimizations too conservatively.
+   - Closest related protocols: [[EPaxosStar]], [[FastPaxos]].
+
+93. **Parametric e-fast protocol generator**
+   - Core mechanism: Generate protocol variants for different `e` values under the EPaxos* lower-bound shape.
+   - Expected advantage: Lets deployments trade process count, fast availability, and quorum size explicitly.
+   - Main risk: Generated variants still need individual proof or a strong generic theorem.
+   - Closest related protocols: [[EPaxosStar]], [[quorum-intersection]].
+
+94. **Conflict-invariant DSL**
+   - Core mechanism: Applications declare conflict and commutativity rules in a restricted DSL that also emits proof obligations.
+   - Expected advantage: Reduces ad hoc conflict predicates in dependency-based SMR.
+   - Main risk: DSL expressiveness may be insufficient or unsoundly compiled.
+   - Closest related protocols: [[EPaxos]], [[Mencius]].
+
+95. **Proof-carrying fast acknowledgements**
+   - Core mechanism: Fast acknowledgements include machine-checkable evidence that the replica's dependency proposal follows the conflict rules.
+   - Expected advantage: Helps detect implementation bugs and unsafe metadata.
+   - Main risk: Proof payloads may be too large for practical fast paths.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+96. **Invariant-guided slow fallback**
+   - Core mechanism: Slow path chooses the smallest dependency repair that restores agreement, visibility, and acyclicity invariants.
+   - Expected advantage: Avoids over-unioning dependencies after fast-path disagreement.
+   - Main risk: Minimal repair search may be computationally expensive.
+   - Closest related protocols: [[EPaxos]], [[SwiftPaxos]], [[EPaxosStar]].
+
+97. **Fast certificate model checker**
+   - Core mechanism: Each proposed optimization must define a certificate schema checked against small-model quorum/recovery counterexamples.
+   - Expected advantage: Filters unsafe ideas before implementation.
+   - Main risk: Passing small models does not prove general correctness.
+   - Closest related protocols: [[FastPaxos]], [[EPaxosStar]], [[rocq-modeling-notes]].
+
+98. **Dependency normalization theorem**
+   - Core mechanism: Normalize different dependency encodings into one canonical partial order before commit.
+   - Expected advantage: Allows replicas to agree despite using different local metadata representations.
+   - Main risk: Canonicalization may hide distinctions recovery needs.
+   - Closest related protocols: [[SwiftPaxos]], [[EPaxos]].
+
+99. **Safety-envelope annotations**
+   - Core mechanism: Every fast certificate carries an annotation naming the exact invariant branch it relies on, such as conflict-free, anchored, or validated.
+   - Expected advantage: Makes mixed-mode protocols more auditable and easier to model.
+   - Main risk: Incorrect annotations could mislead recovery unless independently checked.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]].
+
+100. **Protocol-family workbench**
+   - Core mechanism: Treat quorum family, leader role, dependency encoding, and recovery predicate as pluggable dimensions with generated proof obligations.
+   - Expected advantage: Systematically explores novel 1-RTT designs without exceeding known fast-quorum budgets.
+   - Main risk: The design space may produce many variants whose proofs do not compose.
+   - Closest related protocols: [[EPaxosStar]], [[SwiftPaxos]], [[FastPaxos]].
+
+## Immediate Proof Obligations
+
+- For each candidate, define the committed object precisely: command, dependency set, dependency path, constraint set, or certificate root.
+- Prove command-level agreement under the selected fast and recovery quorum families.
+- Prove visibility/order for every pair of conflicting committed non-`Nop` commands.
+- Prove execution safety: either acyclic committed dependencies or deterministic SCC execution.
+- Define the recovery selection predicate before optimizing the fast path.
+- Show that any adaptive mode, epoch, anchor, or quorum-family transition has explicit boundary evidence.
+
+## Highest-Potential Clusters
+
+- Anchored-but-distributed fast paths: ideas 1-10.
+- Recoverability-first metadata: ideas 21-30 and 91-100.
+- Execution-latency repair for EPaxos-like protocols: ideas 51-60.
+- Workload-adaptive fast paths: ideas 61-70.
+- Sharded and multi-object fast SMR: ideas 71-80.
+
+## TODO
+
+- Pick 5-10 candidates and turn each into a proof sketch with exact quorum assumptions.
+- Derive which candidates fit EPaxos `n = 2f + 1` directly and which require SwiftPaxos C2-style fixed fast quorum families.
+- Add counterexample searches for candidates involving negative evidence, mode changes, or cross-shard receipts.

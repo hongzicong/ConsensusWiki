@@ -58,5 +58,5 @@
 - [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
-- [[new-protocol-ideas]] - Ideas inspired by the ingested papers.
+- [[new-protocol-ideas]] - 100 speculative 1-RTT fast-path SMR/consensus candidates inspired by the ingested papers.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
