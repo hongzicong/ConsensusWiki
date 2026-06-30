@@ -1,4 +1,4 @@
-﻿---
+---
 type: comparison-dimension
 dimension: quorum systems
 protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, SwiftPaxos, Pando]
@@ -39,7 +39,7 @@ Fast paths need either larger quorums, leader inclusion, identical metadata, or 
 
 Counting convention: these rows count total quorum membership unless explicitly saying "non-leader replies." This matters for [[EPaxos]], where the paper states the fast-path quorum size as including the command leader.
 
-In [[EPaxosStar|EPaxos*]], `f` and `e` are separate budgets. `f` is the total crash-failure resilience target, while `e <= f` is the number of failures under which conflict-free commands should still execute on the fast path. This is why the fast quorum is written as `n - e`: after `e` failures, exactly `n - e` processes remain available, so a fast quorum of size `n - e` is the largest quorum that can still be collected in the `e`-faulty fast run. Slow and recovery quorums use `n - f` because they must remain available under the full `f`-failure resilience target.
+In [[EPaxosStar]], `f` and `e` are separate budgets. `f` is the total crash-failure resilience target, while `e <= f` is the number of failures under which conflict-free commands should still execute on the fast path. This is why the fast quorum is written as `n - e`: after `e` failures, exactly `n - e` processes remain available, so a fast quorum of size `n - e` is the largest quorum that can still be collected in the `e`-faulty fast run. Slow and recovery quorums use `n - f` because they must remain available under the full `f`-failure resilience target.
 
 The boundary choice `e = f` is allowed, but it changes the optimized EPaxos* bound to `n >= max{3f - 1, 2f + 1}`. For `f >= 2`, the minimal configuration is `n = 3f - 1`, with fast quorum size `n - f = 2f - 1`. So `e = f` minimizes the fast quorum for fixed `n`, but the lower bound may force `n` upward.
 

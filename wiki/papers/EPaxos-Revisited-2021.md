@@ -75,9 +75,6 @@ The reevaluation differs from the original EPaxos evaluation by measuring execut
 ### Rocq/Coq modeling notes
 Separate the safety proof of EPaxos tuples from performance-oriented assumptions about dependency graph traversal. The pruning rule needs a lemma showing that a pruned dependency necessarily executes after the current instance.
 
-### TLA+ modeling notes
-Track commit and execution as separate states. A useful model should expose cases where an instance is committed but blocked on transitive dependency discovery or commit.
-
 ## Limitations
 The paper does not re-prove EPaxos recovery correctness. It also notes that throughput measurements are sensitive to implementation artifacts, including scheduler behavior and implementation-specific execution scanning.
 

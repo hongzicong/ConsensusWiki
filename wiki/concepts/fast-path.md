@@ -11,10 +11,10 @@ Typical fast-path requirements:
 Examples:
 - [[FastPaxos]] can learn in a fast round when a fast quorum accepts the same value.
 - [[EPaxos]] can fast-commit when replicas return matching `(cmd, seq, deps)` attributes; execution can still wait on dependencies.
-- [[EPaxosStar|EPaxos*]] can fast-commit when a quorum of size at least `n - e` returns dependency sets equal to `initDep[id]`.
+- [[EPaxosStar]] can fast-commit when a quorum of size at least `n - e` returns dependency sets equal to `initDep[id]`.
 - [[SwiftPaxos]] uses matching FastAck dependency evidence, with SlowAck fallback.
 
 For formal modeling, define the fast path by its commit predicate and recovery obligation: if something fast-commits, every later recovery quorum must contain enough evidence to preserve the same decision or compatible metadata.
 
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[EPaxosStar|EPaxos*]], [[SwiftPaxos]], [[Pando]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
+[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[Pando]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]

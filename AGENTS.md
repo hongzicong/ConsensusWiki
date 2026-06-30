@@ -12,7 +12,7 @@ The wiki should help with:
 * extracting protocol mechanisms,
 * comparing protocols by technical dimensions,
 * identifying quorum, fast-path, recovery, and proof rules,
-* preparing Rocq/Coq/TLA+ models,
+* preparing Rocq/Coq models,
 * collecting ideas for new consensus protocols.
 
 ## Important rules
@@ -89,7 +89,6 @@ wiki/
     quorum-intersection.md
     adopt-commit-abstraction.md
     rocq-modeling-notes.md
-    tla-modeling-notes.md
 
   open-questions/
     new-protocol-ideas.md
@@ -215,8 +214,6 @@ status: ingested
 ## Modeling notes
 
 ### Rocq/Coq modeling notes
-
-### TLA+ modeling notes
 
 ## Limitations
 
@@ -476,8 +473,7 @@ Distinguish between:
 
 * the real paper protocol,
 * a simplified abstraction,
-* a Rocq/Coq model,
-* a TLA+ model.
+* a Rocq/Coq model.
 
 ## Query workflow
 
@@ -554,8 +550,6 @@ Use this structure:
 ## Proof notes
 
 ## Open questions
-
-## Recently updated
 ```
 
 Each entry should include a wikilink and a one-line summary.
@@ -578,4 +572,4 @@ When asked to compare protocols, use protocol catalog, dimension pages, and fami
 
 When asked to brainstorm, perform the brainstorm workflow.
 
-When asked to prepare material for Rocq/Coq or TLA+, focus on state, messages, transition rules, quorum assumptions, invariants, and proof obligations.
+When asked to prepare material for Rocq/Coq, focus on state, messages, transition rules, quorum assumptions, invariants, and proof obligations.

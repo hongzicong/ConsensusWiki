@@ -16,7 +16,7 @@ status: ingested
 EPaxos* is a corrected and simplified variant of [[EPaxos]] with a rigorously proved recovery protocol and an optimal `f`-resilient `e`-fast process bound.
 
 ## Why this paper matters
-The paper identifies ambiguity, safety bugs, and recovery liveness bugs in original [[EPaxos]], then gives [[EPaxosStar|EPaxos*]] as a cleaner protocol whose recovery is designed around validation rather than tentative pre-accept side effects.
+The paper identifies ambiguity, safety bugs, and recovery liveness bugs in original [[EPaxos]], then gives [[EPaxosStar]] as a cleaner protocol whose recovery is designed around validation rather than tentative pre-accept side effects.
 
 ## System model
 The paper considers a set `Pi` of `n >= 3` processes with reliable links. Processes implement state-machine replication for deterministic services with client commands submitted through `submit(c)` and executed through `execute(c)`. Each submitted command is assumed unique. Commands may commute; non-commuting commands conflict.
@@ -116,9 +116,6 @@ EPaxos* is a corrected descendant of [[EPaxos]]. It keeps the leaderless depende
 ### Rocq/Coq modeling notes
 Model command identifiers separately from payloads, and make `Nop` explicit. The main proof split is instance agreement for `(cmd, dep)` and visibility for conflicting committed commands. Recovery should be modeled as evidence selection plus a validation predicate; do not model validation as a state-changing tentative pre-accept.
 
-### TLA+ modeling notes
-The paper reports supplementary TLA+ material. A useful model should include phases, `bal`, `abal`, `initCmd`, `initDep`, validation responses, waiting cycles, and the eventual leader detector abstraction `Omega[id]`.
-
 ## Limitations
 The protocol deliberately omits the original EPaxos optimization that returns early for commands without return values, because applying it directly can violate linearizability and requires extra mitigations. Liveness is stated for executions with finitely many submitted commands.
 
@@ -127,4 +124,4 @@ The protocol deliberately omits the original EPaxos optimization that returns ea
 - TODO: Formalize `f`-resilient `e`-fast SMR as a standalone proof note.
 
 ## Related pages
-[[EPaxosStar|EPaxos*]], [[EPaxos]], [[dependency]], [[conflict]], [[fast-path]], [[recovery]], [[quorum]], [[quorum-intersection]], [[leaderless-protocols]], [[proof-techniques]]
+[[EPaxosStar]], [[EPaxos]], [[dependency]], [[conflict]], [[fast-path]], [[recovery]], [[quorum]], [[quorum-intersection]], [[leaderless-protocols]], [[proof-techniques]]

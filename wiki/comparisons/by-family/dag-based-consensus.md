@@ -30,7 +30,7 @@ TODO: Populate after ingesting DAG-based consensus papers.
 TODO: Populate after ingesting DAG-based consensus papers.
 
 ## Modeling implications
-Dependency graphs in [[EPaxos]], [[EPaxosStar|EPaxos*]], and [[SwiftPaxos]] are useful background, but they are not by themselves evidence that these protocols are DAG-based consensus protocols.
+Dependency graphs in [[EPaxos]], [[EPaxosStar]], and [[SwiftPaxos]] are useful background, but they are not by themselves evidence that these protocols are DAG-based consensus protocols.
 
 ## Open questions
 - Which DAG-based consensus paper should be ingested first?

@@ -1,4 +1,4 @@
-﻿---
+---
 type: comparison-dimension
 dimension: timing assumptions
 protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, SwiftPaxos, Pando]
@@ -27,7 +27,7 @@ A model that bakes timing into safety can prove the wrong theorem, while a model
 Safety claims are mostly quorum/intersection claims; timing assumptions enter liveness, fast-path availability, and performance.
 
 ## Important exceptions
-[[EPaxosStar|EPaxos*]] explicitly states an `e`-faulty synchronous fast-path guarantee, so its timing assumptions are part of the fast-path performance theorem.
+[[EPaxosStar]] explicitly states an `e`-faulty synchronous fast-path guarantee, so its timing assumptions are part of the fast-path performance theorem.
 
 ## Common pitfalls
 Do not use timeout behavior as evidence that a value is safe to recover unless the paper explicitly proves that connection.

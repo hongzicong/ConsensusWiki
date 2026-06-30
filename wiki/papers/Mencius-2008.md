@@ -148,12 +148,6 @@ Rules 1-4 ensure that a client request sent to a correct server eventually commi
 - Model revocation with an ordinary higher-round Paxos Phase 1 safe-value predicate.
 - Treat FIFO as a hypothesis for the piggybacking optimizations only; the core safety of Coordinated Paxos should not depend on timing.
 
-### TLA+ modeling notes
-- Start with a small configuration such as `n = 3`, `f = 1`.
-- Model `Ip` advancement and Rule 2 skips carefully; this is where holes in the sequence are filled.
-- Add out-of-order commit only after proving the in-order version, because it changes the execution-ready predicate.
-- Use a separate action for false-suspicion revocation and Rule 4 resubmission.
-
 ## Limitations
 - Byzantine Mencius is explicitly left open; the paper notes that skipping is not built on a quorum abstraction, making a Byzantine extension nontrivial.
 - If any server fails, Mencius may see temporarily reduced performance because every server owns an unbounded number of instances.
@@ -174,5 +168,3 @@ Rules 1-4 ensure that a client request sent to a correct server eventually commi
 - [[recovery-rules]]
 - [[timing-assumptions]]
 - [[rocq-modeling-notes]]
-- [[tla-modeling-notes]]
-

@@ -101,7 +101,7 @@ For formal models, separate:
 - recovery validation and `Waiting` cycle-breaking.
 
 ## Open questions
-- TODO: Build a small Rocq/TLA+ abstraction of the validation predicate and prove it preserves visibility.
+- TODO: Build a small Rocq/Coq abstraction of the validation predicate and prove it preserves visibility.
 - TODO: Decide how to represent the thrifty variant separately, if needed.
 
 ## Sources

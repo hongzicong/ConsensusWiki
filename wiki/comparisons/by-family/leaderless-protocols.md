@@ -7,7 +7,7 @@ tags: [leaderless]
 
 # Leaderless Protocols
 
-[[EPaxos]] and [[EPaxosStar|EPaxos*]] are the currently ingested leaderless SMR protocols. [[FastPaxos]] can bypass the coordinator in prepared fast rounds, but still has coordinators per round. [[SwiftPaxos]] and [[Pando]] use leaders/delegates in important paths.
+[[EPaxos]] and [[EPaxosStar]] are the currently ingested leaderless SMR protocols. [[FastPaxos]] can bypass the coordinator in prepared fast rounds, but still has coordinators per round. [[SwiftPaxos]] and [[Pando]] use leaders/delegates in important paths.
 
 [[EPaxos-Revisited-2021]] is the main cautionary evaluation source: leaderless fast-path commit can improve median latency while still producing poor tail execution latency when conflicts, batching, or dependency chains appear.
 

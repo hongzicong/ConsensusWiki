@@ -86,9 +86,6 @@ SwiftPaxos is closely related to [[EPaxos]] through dependencies, to [[FastPaxos
 ### Rocq/Coq modeling notes
 Model dependency paths, not only direct dependency sets. Prove acyclicity as a first-class invariant.
 
-### TLA+ modeling notes
-Important state variables are `bal`, `cbal`, `phase`, `cmd`, `dep`, and `status`; recovery's `Sync` transition is likely the hardest state update.
-
 ## Limitations
 Message complexity is quadratic. The extracted PDF text did not expose full bibliographic metadata; venue/authors need verification from the PDF front matter.
 

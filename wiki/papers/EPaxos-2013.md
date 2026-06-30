@@ -85,9 +85,6 @@ EPaxos draws on Paxos, Fast Paxos, Generalized Paxos, and Mencius. [[SwiftPaxos]
 ### Rocq/Coq modeling notes
 Separate instance safety from execution-order safety. Model interference as an explicit relation and prove that committed interfering commands are related by dependency reachability or sequence ordering.
 
-### TLA+ modeling notes
-Model logs as maps from `(replica, instance)` to `(cmd, seq, deps, status)`. Recovery is the most error-prone part.
-
 ## Limitations
 Execution may lag commit under dependency chains or high conflict. Exact optimized recovery is subtle; use the technical report for full proofs.
 

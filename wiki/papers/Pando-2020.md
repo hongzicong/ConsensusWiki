@@ -89,9 +89,6 @@ PANDO builds on Paxos and compares against EPaxos, RS-Paxos, Fast Paxos, Mencius
 ### Rocq/Coq modeling notes
 Model value identity separately from splits. The main obligation is that Phase 1b evidence with `k` splits reconstructs any prior chosen value.
 
-### TLA+ modeling notes
-Appendix variables include `Quorum1a`, `Quorum1b`, `Quorum2`, `K`, `maxPBal`, `maxABal`, `maxVal`, `chosen`, and `readLog`.
-
 ## Limitations
 The protocol targets single-key GET and conditional-PUT; multi-key transactions are deferred. The benefits rely on workload and data-site placement.
 

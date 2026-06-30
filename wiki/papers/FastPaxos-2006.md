@@ -6,7 +6,7 @@ year: 2006
 venue: Distributed Computing
 source: raw/fastpaxos.pdf
 protocols: [Fast Paxos]
-tags: [paxos, fast-consensus, quorum, tla]
+tags: [paxos, fast-consensus, quorum]
 status: ingested
 ---
 
@@ -16,7 +16,7 @@ status: ingested
 Fast Paxos extends classic Paxos so that, in collision-free executions, a proposed value can be learned in two message delays.
 
 ## Why this paper matters
-It isolates the quorum-intersection condition needed for fast consensus and gives a formal TLA+ specification. This makes it a central source for [[fast-path]], [[quorum]], [[recovery]], and [[proof-techniques]].
+It isolates the quorum-intersection condition needed for fast consensus. This makes it a central source for [[fast-path]], [[quorum]], [[recovery]], and [[proof-techniques]].
 
 ## System model
 Asynchronous message-passing system with proposers, acceptors, coordinators, and learners. Roles are logical: one process may play several roles.
@@ -37,7 +37,7 @@ Proposers propose values; acceptors choose by voting; coordinators start rounds 
 `phase1a`, `phase1b`, `phase2a`, `phase2b`, proposal messages, and special `phase2a any` messages in fast rounds.
 
 ## Local state
-Acceptors track the highest promised round and accepted round/value. Coordinators track current round and chosen phase 2a value, including `any` or `none` in the TLA+ model.
+Acceptors track the highest promised round and accepted round/value. Coordinators track current round and chosen phase 2a value, including special `any` or `none` choices.
 
 ## Normal path
 In a classic round, the coordinator runs phase 1 then sends one value in phase 2a to a quorum. In a prepared fast round, the coordinator sends `any`; proposers send values directly to acceptors; acceptors vote for the first value accepted in that fast round.
@@ -76,7 +76,6 @@ The key invariant is that a higher round cannot choose a value different from a 
 ## Important formulas
 - Chosen in round `i`: an `i`-quorum voted for the value.
 - Quorum requirement: `(a)` any two quorums intersect; `(b)` if `j` is fast, any `i`-quorum and any two `j`-quorums intersect.
-- TLA+ constants include `FastNum`, `Quorum(i)`, `Coord(i)`.
 
 ## Relationship to other protocols
 [[FastPaxos|Fast Paxos]] is a base for later fast-consensus and leaderless/near-leaderless systems such as [[EPaxos]], [[SwiftPaxos]], and [[Pando]].
@@ -85,9 +84,6 @@ The key invariant is that a higher round cannot choose a value different from a 
 
 ### Rocq/Coq modeling notes
 Model rounds, quorum families, accepted votes, and a `pickable` predicate for the phase 2a rule. The hardest obligation is the fast-round quorum intersection case.
-
-### TLA+ modeling notes
-The appendix is directly usable as a modeling reference; keep `any` and `none` as distinguished values outside `Val`.
 
 ## Limitations
 Fast latency is not guaranteed under collisions. Implementation choices for recovery and message routing affect cost.
