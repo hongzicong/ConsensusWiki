@@ -3,6 +3,7 @@
 ## Notes
 - [[FastPaxos]] needs ordinary quorum intersection plus the fast-round condition involving any quorum and two fast quorums.
 - [[EPaxosStar]] separates overall fault tolerance `f` from fast-path fault tolerance `e`; optimized correctness matches `n >= max{2e + f - 1, 2f + 1}` with slow/recovery quorums of size `n - f` and fast quorums of size `n - e`.
+- [[Atlas]] uses fast quorums of size `floor(n/2) + f`, slow quorums of size `f + 1`, and recovery quorums of size `n - f`; recovery relies on reconstructing fast dependency unions from at least `floor(n/2)` non-coordinator fast-quorum replies.
 - [[SwiftPaxos]] requires any two fast quorums in a ballot to intersect in more than `N/2` replicas.
 - [[Pando]] distinguishes discovery (`Phase 1a`) from recovery (`Phase 1b`) intersections; only Phase 1b must recover `k` splits.
 
@@ -39,6 +40,24 @@ n >= max{2e + f - 1, 2f + 1}
 ```
 
 The optimized [[EPaxosStar]] protocol matches this bound. Its recovery arguments use intersections between recovery quorums of size `n - f`, fast quorums of size `n - e`, and validation evidence about conflicting commands.
+
+## Atlas fast recovery shape
+[[Atlas-2020]] sets:
+
+```text
+fast quorum size = floor(n/2) + f
+slow quorum size = f + 1
+recovery quorum size = n - f
+```
+
+If a recovery quorum `Q` of size `n - f` intersects a remembered fast quorum `Q0` of size `floor(n/2) + f`, then:
+
+```text
+|Q intersect Q0| >= |Q| + |Q0| - n
+                 = floor(n/2)
+```
+
+When the initial coordinator does not reply to recovery, this intersection supplies at least `floor(n/2)` non-coordinator fast-quorum reports. The fast-path predicate ensures that the original fast dependency union can be reconstructed from such reports.
 
 ## TODO
 Derive all quorum-size inequalities in a standalone algebra table.

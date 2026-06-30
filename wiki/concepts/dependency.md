@@ -6,5 +6,7 @@ A [[dependency]] records that one command must be considered before another. EPa
 
 [[EPaxosStar]] uses dependency sets without EPaxos sequence numbers in its core presentation. Its key visibility invariant says that if two distinct committed non-`Nop` commands conflict, at least one command identifier must be in the other's dependency set.
 
+[[Atlas]] also commits dependency sets without sequence numbers. Its fast-path condition does not require identical dependency replies; it requires the final dependency union to be recoverable because each included dependency appears in at least `f` fast-quorum replies.
+
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[Pando]]
+[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]]

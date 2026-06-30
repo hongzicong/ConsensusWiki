@@ -1,6 +1,6 @@
 # conflict
 
-A [[conflict]] means concurrent values or commands cannot both be accepted/executed without ordering. Fast Paxos collisions and EPaxos/SwiftPaxos command conflicts are related but not identical.
+A [[conflict]] means concurrent values or commands cannot both be accepted/executed without ordering. Fast Paxos collisions and EPaxos/Atlas/SwiftPaxos command conflicts are related but not identical.
 
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[SwiftPaxos]], [[Pando]]
+[[FastPaxos]], [[EPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]]

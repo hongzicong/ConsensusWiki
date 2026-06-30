@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fault models
-protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, SwiftPaxos, Pando]
+protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia]
 tags: [failure-model]
 ---
 
@@ -20,8 +20,11 @@ Fault assumptions determine quorum sizes, recovery evidence, and which liveness 
 | [[EPaxos]] | Replicas are both acceptors and command leaders | Non-Byzantine replica failures | Majority/fast quorum evidence preserves one safe tuple per instance | Any surviving replica can lead new commands or recovery if quorums are available | Model failed command leaders separately from failed quorum members | [[EPaxos-2013]] |
 | [[EPaxosStar]] | Separates full crash resilience `f` from fast-path failure budget `e` | Non-Byzantine crash failures | Bound `n >= max{2e + f - 1, 2f + 1}` supports validated recovery | Fast path is guaranteed under at most `e` failures in the synchronous fast run; slow/recovery handles up to `f` | Keep `e` and `f` as distinct parameters | [[Making-Democracy-Work-2025]] |
 | [[Mencius]] | Every server owns infinitely many future coordinator slots | Non-Byzantine crash-recovery with stable storage; `n = 2f + 1` tolerates `f` failures | Paxos quorum and revocation preserve chosen values despite failed coordinators | Any failed server creates slots that must be skipped or revoked; long-term recovery needs checkpoint/state transfer | Model crashed owner separately from unavailable quorum members | [[Mencius-2008]] |
+| [[PigPaxos]] | Followers and relays may silently crash | Non-Byzantine crash failures; `N = 2f + 1` tolerates `f` failures | Safety unchanged because failed relays only affect message delivery | Relay failures can hide an entire group's replies until retry, affecting latency/tail behavior | Model relay failure as loss/delay of a batch of follower replies | [[PigPaxos-2021]] |
+| [[Atlas]] | Site/data-center processes may crash or be temporarily unreachable | Non-Byzantine crashes; `1 <= f <= floor((n - 1)/2)` | More than `f` failures may block but do not violate safety | Small `f` is the intended planet-scale deployment assumption | Model `f` as an availability budget, not as majority-of-`n` by default | [[Atlas-2020]] |
 | [[SwiftPaxos]] | Replicas fail non-Byzantinely | Non-Byzantine faults | Leader-including fast quorums and slow quorums preserve dependency evidence | Eventual stable ballot/leader needed for progress | Record leader failure separately from dependency evidence loss | [[SwiftPaxos-2024]] |
 | [[Pando]] | Storage/data sites may fail | Non-Byzantine data-site failures | Intersecting quorums preserve enough coded splits of chosen values | Reads/writes need available Phase 1b/Phase 2 quorums | Model failed sites as missing splits, not corrupted values | [[Pando-2020]] |
+| [[Rabia]] | Replicas may crash fail-stop | At most `f` crashes with `n ≥ 2f + 1`; Byzantine faults excluded | Binary agreement and weak validity preserve slot outputs despite crashes | Weak-MVC terminates with probability 1 when a majority is non-faulty | Keep the common-coin adversary assumption explicit | [[Rabia-2021]] |
 
 ## Main patterns
 All currently ingested protocols assume non-Byzantine failures.

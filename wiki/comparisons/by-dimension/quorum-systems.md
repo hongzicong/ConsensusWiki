@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: quorum systems
-protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, SwiftPaxos, Pando]
+protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia]
 tags: [quorum]
 ---
 
@@ -20,8 +20,11 @@ Every fast path here buys latency by strengthening quorum intersections or metad
 | [[EPaxos]] | Majority plus fast quorum over `N = 2F + 1` | Fast path requires matching attributes | Preserves one tuple per instance | Majority recovery | Separate command leader from quorum members | [[EPaxos-2013]] |
 | [[EPaxosStar]] | Parameterized slow/recovery quorum `n - f` and fast quorum `n - e` | Optimized protocol requires `n >= max{2e + f - 1, 2f + 1}` | Recovery validation preserves agreement and visibility | `e` bounds fast-path failures; `f` bounds overall crash resilience | Model `e` and `f` independently | [[Making-Democracy-Work-2025]] |
 | [[Mencius]] | Paxos quorum plus owner-authored `SKIP` | Paper states quorum size `f + 1` with `n = 2f + 1`; `SKIP` is safe by simple-consensus value restriction | Quorum evidence preserves chosen non-`no-op`; coordinator `SKIP` proves `no-op` without majority agreement | Progress needs live quorum and revocation of suspected coordinators | Model `SKIP` as owner evidence, not as a quorum certificate | [[Mencius-2008]] |
+| [[PigPaxos]] | Ordinary Paxos majority quorum carried through relay aggregates | `N = 2f + 1`; leader must count unique replica votes, not relay messages | Relay groups do not alter quorum intersection or chosen-value rules | Relay failures can force retries, but a live majority remains enough for progress under timing assumptions | Model relays as transport/aggregation nodes, not quorum members with extra voting power | [[PigPaxos-2021]] |
+| [[Atlas]] | Fast quorum `floor(n/2) + f`, slow quorum `f + 1`, recovery quorum `n - f` | `1 <= f <= floor((n - 1)/2)`; fast quorum includes initial coordinator | Recovery can find slow accepted proposals and reconstruct fast dependency unions | Small `f` gives smaller quorums but more than `f` unavailable sites may block | Track the remembered initial fast quorum per command | [[Atlas-2020]] |
 | [[SwiftPaxos]] | Majority slow quorums; leader-including fast quorums | Fast quorum intersection size is greater than `N/2` | Preserves dependency-path agreement | Slow quorum fallback | Model fast quorum membership per ballot | [[SwiftPaxos-2024]] |
 | [[Pando]] | Phase 1a, Phase 1b, Phase 2 quorums | 1a intersects 2 in one site; 1b intersects 2 in `k` splits | Recovers chosen erasure-coded values | Needs available 1b and 2 quorums | Distinguish value id from split count | [[Pando-2020]] |
+| [[Rabia]] | Each step waits for `n - f`; proposal/state majority is `⌊n/2⌋ + 1`; decision vote threshold is `f + 1` | `n ≥ 2f + 1`; no leader inclusion | Prevents two concrete proposals or binary decisions for the same slot | Non-faulty majority lets Weak-MVC keep advancing | Model `⊥` as a valid weak outcome, not a recovered value | [[Rabia-2021]] |
 
 ## Main patterns
 Fast paths need either larger quorums, leader inclusion, identical metadata, or a fallback quorum that can reconstruct prior choices.
@@ -33,13 +36,18 @@ Fast paths need either larger quorums, leader inclusion, identical metadata, or 
 | [[EPaxos]] | `N = 2F + 1` replicas | `F + floor((F + 1)/2)` total, including the command leader; non-leader replies are one fewer |
 | [[EPaxosStar]] | General `n, e, f` | `n - e`; optimized correctness requires `n >= max{2e + f - 1, 2f + 1}` |
 | [[Mencius]] | `n = 2f + 1` servers | no Fast Paxos-style fast quorum; classic/recovery quorum is `f + 1`, while `SKIP` can be learned from the coordinator |
+| [[PigPaxos]] | `N = 2f + 1` replicas | no Fast Paxos-style fast quorum; classic quorum remains `floor(N/2) + 1`; relay partial thresholds must satisfy `sum_{i=1}^R g_i >= floor(N/2) + 1` |
+| [[Atlas]] | General `n, f`, with `1 <= f <= floor((n - 1)/2)` | `floor(n/2) + f`; slow quorum `f + 1`; recovery quorum `n - f` |
 | [[SwiftPaxos]] C1 | `N = 2f + 1` replicas | any leader-including set with size `> 3N/4`, i.e. at least `floor(3N/4) + 1` |
 | [[SwiftPaxos]] C2 | `N = 2f + 1` replicas | a unique fixed majority fast quorum of size `f + 1`, including the leader |
 | [[Pando]] | Erasure-coded storage with split threshold `k` | no SMR fast quorum; Phase 1a fast-read/discovery quorum has size `max(k, f + 1)`, while Phase 1b/Phase 2 quorums are at least `f + k` |
+| [[Rabia]] | `n ≥ 2f + 1` replicas | no fast quorum in the Paxos sense; each Weak-MVC communication step waits for `n - f`, while fast termination needs aligned majority-derived binary state |
 
 Counting convention: these rows count total quorum membership unless explicitly saying "non-leader replies." This matters for [[EPaxos]], where the paper states the fast-path quorum size as including the command leader.
 
 In [[EPaxosStar]], `f` and `e` are separate budgets. `f` is the total crash-failure resilience target, while `e <= f` is the number of failures under which conflict-free commands should still execute on the fast path. This is why the fast quorum is written as `n - e`: after `e` failures, exactly `n - e` processes remain available, so a fast quorum of size `n - e` is the largest quorum that can still be collected in the `e`-faulty fast run. Slow and recovery quorums use `n - f` because they must remain available under the full `f`-failure resilience target.
+
+In [[Atlas]], `f` is the tolerated number of concurrent site failures, chosen independently of `n` within `1 <= f <= floor((n - 1)/2)`. The fast quorum size `floor(n/2) + f` is large enough that, after removing up to `f` fast-quorum members including the initial coordinator, recovery can still reconstruct a fast-path dependency union from at least `floor(n/2)` non-coordinator fast-quorum replies.
 
 The boundary choice `e = f` is allowed, but it changes the optimized EPaxos* bound to `n >= max{3f - 1, 2f + 1}`. For `f >= 2`, the minimal configuration is `n = 3f - 1`, with fast quorum size `n - f = 2f - 1`. So `e = f` minimizes the fast quorum for fixed `n`, but the lower bound may force `n` upward.
 

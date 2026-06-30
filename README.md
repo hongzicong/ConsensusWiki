@@ -42,6 +42,12 @@ Key directories:
 - `wiki/proof-notes/` contains proof and formal-modeling notes.
 - `wiki/open-questions/` contains unresolved issues, unclear points, and new protocol ideas.
 
+## How to Injest New Papers?
+
+```text
+Please ingest the paper of XXX.
+```
+
 ## How to Brainstorm New Ideas?
 
 ```text
