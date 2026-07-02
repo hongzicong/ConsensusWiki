@@ -1,7 +1,7 @@
 ---
 type: comparison-family
 family: fast consensus
-protocols: [FastPaxos, EPaxos, Atlas, SwiftPaxos, Pando, Rabia]
+protocols: [FastPaxos, GPaxos, EPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP]
 tags: [fast-path]
 ---
 
@@ -10,8 +10,12 @@ tags: [fast-path]
 ## Family overview
 Fast consensus protocols reduce common-case message delays by collecting stronger evidence early.
 
+[[GPaxos]] is the bridge between [[FastPaxos]] and dependency-based SMR protocols: its fast evidence can be a compatible set of command histories rather than one identical value.
+
+[[CURP]] is included as a boundary case rather than a Paxos-family protocol: it achieves 1 RTT primary-backup updates through unordered witness durability and commutativity, not through ordered consensus fast quorums.
+
 ## Shared mechanism
-A fast path succeeds only when evidence is strong enough for later recovery: same value, same dependencies, recoverable dependency union, same dependency paths, or enough chosen splits.
+A fast path succeeds only when evidence is strong enough for later recovery: same value, compatible c-structs, same dependencies, recoverable dependency union, same dependency paths, or enough chosen splits.
 
 [[Rabia]] adds a randomized variant: the fast path can also succeed by deciding that no concrete request should occupy the current slot, returning `⊥` and retrying proposals later.
 

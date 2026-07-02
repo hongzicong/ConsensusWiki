@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: proof techniques
-protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia]
+protocols: [FastPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP]
 tags: [proof]
 ---
 
@@ -10,6 +10,7 @@ tags: [proof]
 | Protocol | Main proof object | Key invariant |
 |---|---|---|
 | [[FastPaxos]] | Round/value votes | Higher rounds cannot choose incompatible lower possible choices |
+| [[GPaxos]] | Ballot array over c-struct votes | If every vote is safe at its ballot, all chosen c-structs are compatible |
 | [[EPaxos]] | Instance tuple `(cmd, seq, deps)` | One safe tuple per instance; interfering commands dependency-ordered |
 | [[EPaxosStar]] | Command payload/dependency graph plus recovery validation evidence | Agreement for `(cmd, dep)`; visibility for conflicting committed commands |
 | [[Mencius]] | Simple consensus instance plus owner/`no-op` restriction | Only the coordinator can choose non-`no-op`; revocation preserves possible prior outcomes |
@@ -18,6 +19,7 @@ tags: [proof]
 | [[SwiftPaxos]] | Accepted dependency paths | Same dependencies for committed command; acyclic committed graph |
 | [[Pando]] | Proposal/value/split evidence | Later proposals recover any earlier chosen value |
 | [[Rabia]] | Weak-MVC phase state and votes | Decisions within a phase agree; once decided, the next phase is value-locked |
+| [[CURP]] | Backup history plus one selected witness's unordered request set | Any fast-completed unsynced request is in every witness; selected-witness replay is order-independent because records commute |
 
 ## Evaluation-sensitive invariants
 [[EPaxos-Revisited-2021]] adds a useful modeling distinction for EPaxos: commit safety and execution readiness are separate. A model that only reaches committed states can miss dependency-chain delays and the pruning invariant needed to bound execution latency.
@@ -28,6 +30,8 @@ tags: [proof]
 [[Atlas-2020]] makes a different recovery tradeoff: the fast-path predicate itself is chosen so the dependency union can be reconstructed later. The recovery coordinator first preserves any accepted consensus proposal; only when no slow-path proposal exists does it reason about the remembered fast quorum and whether the initial coordinator answered recovery.
 
 [[Rabia-2021]] uses randomized consensus to avoid a separate recovery proof. The key proof obligation is value-locking: if one replica decides a binary value, later phases force non-decided replicas to carry the same value until they decide.
+
+[[CURP-2019]] proves recovery by splitting history into a synced backup prefix and an unsynced suffix. The backup restores the synced prefix; one witness recovers completed unsynced operations; commutativity and duplicate suppression make replay safe.
 
 
 

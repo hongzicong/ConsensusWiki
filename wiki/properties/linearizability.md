@@ -8,5 +8,7 @@ Linearizability gives each operation a single point between invocation and respo
 
 [[Rabia]] targets log-based SMR linearizability by making replicas execute the same sequence of non-`⊥` decided requests in slot order. Duplicate client requests are skipped using unique IDs.
 
+[[CURP]] preserves primary-backup linearizability while replying before backup sync. Its proof relies on witness durability for completed unsynced operations, master-side sync before non-commuting dependent observations, and exactly-once duplicate filtering during replay.
+
 ## Related pages
-[[PigPaxos]], [[Atlas]], [[Rabia]], [[agreement]], [[recovery]], [[quorum]]
+[[PigPaxos]], [[Atlas]], [[Rabia]], [[CURP]], [[agreement]], [[recovery]], [[quorum]]

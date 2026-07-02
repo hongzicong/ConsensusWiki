@@ -15,10 +15,15 @@ Examples:
 - [[Atlas]] can fast-commit with non-matching dependency replies when `union_Q dep = union^f_Q dep`.
 - [[SwiftPaxos]] uses matching FastAck dependency evidence, with SlowAck fallback.
 - [[Rabia]] can terminate Weak-MVC in three message delays; the fast outcome may be a request or a forfeited `⊥` slot.
+- [[CURP]] can complete primary-backup updates in 1 RTT when all witnesses durably record the request and the master can safely execute it speculatively.
 
 For formal modeling, define the fast path by its commit predicate and recovery obligation: if something fast-commits, every later recovery quorum must contain enough evidence to preserve the same decision or compatible metadata.
 
 [[PigPaxos]] is a useful non-example: its relay aggregation optimizes the common Multi-Paxos path, but it is not a Fast Paxos-style fast path because the commit predicate is still ordinary majority acceptance.
 
+[[GPaxos]] is a positive fast-path example: in a fast ballot, proposers send directly to acceptors and learners can learn in two message delays when a quorum reports compatible c-structs containing the proposed command.
+
+[[CURP]] is a useful boundary case: it has a true 1 RTT fast path, but the evidence is unordered witness durability plus commutativity, not an ordered consensus quorum.
+
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
+[[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]

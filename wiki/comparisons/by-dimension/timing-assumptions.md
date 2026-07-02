@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: timing assumptions
-protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia]
+protocols: [FastPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP]
 tags: [timing, liveness]
 ---
 
@@ -17,6 +17,7 @@ A model that bakes timing into safety can prove the wrong theorem, while a model
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
 | [[FastPaxos]] | Fast and classic rounds | Asynchronous safety; progress needs favorable conditions/coordinator recovery | Safety is quorum-based, not timing-based | Collisions and failures require eventual recovery progress | Keep safety invariant independent of timers | [[FastPaxos-2006]] |
+| [[GPaxos]] | Fast and classic ballots over c-structs | Asynchronous safety; classic progress with eventual unique leader/live quorum; fast progress when compatible evidence is collected or collisions are observed | Safety depends on safe c-struct votes and quorum intersections, not timing | Interfering commands and failures require higher-ballot recovery | Keep collision detection/liveness separate from generalized consistency proof | [[Generalized-Paxos-2005]] |
 | [[EPaxos]] | Command leaders with PreAccept/Accept recovery | Asynchronous safety; progress with available quorums and recovery | Timing only affects which dependencies are observed | Conflict timing affects fast-path rate and execution latency | Model latency metrics separately from commit safety | [[EPaxos-2013]], [[EPaxos-Revisited-2021]] |
 | [[EPaxosStar]] | Synchronous fast path with validated recovery | Partial synchrony; `e`-faulty synchronous fast guarantee | Agreement/visibility must hold regardless of timing | Fast execution by `t + 2 Delta` is conditional on the fast-run assumptions | State `Delta` only in liveness/performance lemmas | [[Making-Democracy-Work-2025]] |
 | [[Mencius]] | Coordinated Paxos over FIFO channels with unreliable failure detector | Asynchronous safety; FIFO/eventual delivery and eventually accurate failure detector for liveness | Failure-detector mistakes do not break safety; FIFO is used for skip piggybacking optimizations | Progress needs idle coordinators to skip and suspected faulty coordinators to be revoked | Keep FIFO assumptions local to optimizations, not the base chosen-value invariant | [[Mencius-2008]] |
@@ -25,6 +26,8 @@ A model that bakes timing into safety can prove the wrong theorem, while a model
 | [[SwiftPaxos]] | Stable ballot leader with fast/slow ack paths | Asynchronous safety; eventual stable ballot for progress | Dependency safety is independent of message delays | SlowAck/Sync help progress after disagreement | Model eventual leader stability as an assumption, not a safety premise | [[SwiftPaxos-2024]] |
 | [[Pando]] | Quorum reads/writes over geo-storage sites | Quorum safety; progress with available quorums | Intersection, not timing, preserves chosen values | Latency benefits depend on nearby available quorums and write-back | Separate quorum availability from network-delay optimization | [[Pando-2020]] |
 | [[Rabia]] | Randomized Weak-MVC over datacenter replicas | Asynchronous safety; probabilistic termination; stable network only for performance | Safety does not require synchrony | Expected five rounds; fast-path rate depends on aligned PQ heads | Do not encode stable network as a safety assumption | [[Rabia-2021]] |
+
+| [[CURP]] | Witness recording overlaps master execution | Asynchronous safety; network may delay/drop messages; 1 RTT is a successful normal-case path | Commutativity and recovery evidence, not timing, preserve linearizability | Dropped/delayed witness or master messages cause retry or sync fallback | Keep latency theorem separate from recovery safety proof | [[CURP-2019]] |
 
 ## Main patterns
 Safety claims are mostly quorum/intersection claims; timing assumptions enter liveness, fast-path availability, and performance.

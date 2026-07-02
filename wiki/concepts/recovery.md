@@ -8,8 +8,12 @@
 
 [[PigPaxos]] uses ordinary Paxos leader-change recovery. Relay failures are transport failures handled by timeout and retry, not a new safe-value selection rule.
 
+[[GPaxos]] recovery starts a higher ballot and computes `ProvedSafe(Q, m, beta)` from phase 1b evidence. The selected c-struct must extend lower-ballot values that could still be chosen.
+
 [[Rabia]] avoids a separate leader fail-over path. If one replica decides and crashes, the Weak-MVC value-locking argument makes surviving undecided replicas carry the same binary value into later phases.
 
+[[CURP]] recovers by restoring an ordered backup prefix, then replaying requests from one selected witness. The single-witness rule matters: different witnesses may have accepted different request sets, but each individual witness set is mutually commutative.
+
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]]
+[[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]]
 

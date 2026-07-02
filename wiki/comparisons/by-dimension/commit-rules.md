@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: commit rules
-protocols: [FastPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia]
+protocols: [FastPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP]
 tags: [commit-rule, quorum, fast-path, recovery]
 ---
 
@@ -17,6 +17,7 @@ Commit predicates are the bridge between protocol message evidence and [[agreeme
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
 | [[FastPaxos]] | A value is chosen in a round when a quorum for that round accepts it; fast rounds use fast quorums | Fast-round collision-free common case, with recovery after collisions | Later rounds must select a value safe with respect to possibly chosen lower-round values | Progress needs a coordinator/recovery path after collision | Model `any` and the safe phase-2a value predicate separately | [[FastPaxos-2006]] |
+| [[GPaxos]] | A c-struct `v` is chosen at ballot `m` when an `m`-quorum has voted c-structs extending `v`; learners learn lubs of chosen c-structs | Fast path requires compatible c-struct evidence, not identical values | Preserves generalized consistency: learned c-structs remain compatible | Classic ballots progress with stable leader; fast collisions require higher ballot | Model chosen predicate with prefix relation `v <= beta_a[m]` | [[Generalized-Paxos-2005]] |
 | [[EPaxos]] | Fast-commit on matching PreAccept attributes; otherwise Accept/Commit after majority evidence | Matching `(cmd, seq, deps)` for fast path or majority in slow path | Commits one tuple for an instance and orders interfering commands through dependencies | Slow path recovers when fast evidence disagrees or is incomplete | Separate commit from execution readiness; dependencies may delay execution | [[EPaxos-2013]], [[EPaxos-Revisited-2021]] |
 | [[EPaxosStar]] | Fast-commit when a quorum of size `n - e` returns dependency sets equal to `initDep[id]`; recovery may commit `Nop` | Optimized bound `n >= max{2e + f - 1, 2f + 1}` | Validation preserves agreement and visibility among conflicting commands | `Waiting` messages and eventual recovery coordinator stability avoid recovery cycles | Model validation as part of the commit/recovery evidence, not as an optimization | [[Making-Democracy-Work-2025]] |
 | [[Mencius]] | In-order commit after learning an instance and all previous instances; optional out-of-order commit for commutable requests | Simple consensus restricts non-coordinators to `no-op`; out-of-order commit requires application commutativity | Preserves a single learned sequence, or equivalent orders for commutable operations | `SKIP` and revocation fill gaps that would otherwise block commit | Separate chosen, learned, in-order committed, and out-of-order executable | [[Mencius-2008]] |
@@ -25,6 +26,8 @@ Commit predicates are the bridge between protocol message evidence and [[agreeme
 | [[SwiftPaxos]] | Commit/execute from matching dependency-path evidence; SlowAck and Sync repair disagreement | Leader-including fast quorum or slow quorum evidence | Preserves agreed dependencies and acyclic committed dependency graph | Fallback is available when fast evidence does not match | Track dependency paths, not only direct dependency sets | [[SwiftPaxos-2024]] |
 | [[Pando]] | A write is chosen when enough Phase 2 quorum evidence exists; reads can return when chosen value is reconstructible | Erasure-coded quorum intersections recover enough splits | Later proposals/read repair must preserve chosen value identity and reconstructability | Progress needs available Phase 1b/Phase 2 quorums | Distinguish value identity from individual coded splits | [[Pando-2020]] |
 | [[Rabia]] | A slot is decided when Weak-MVC returns; binary `1` maps to a majority proposal, binary `0` maps to `⊥` | Non-faulty majority and common coin; weak validity allows null slots | Agreement is on the slot output, including `⊥` | Probabilistic termination with expected five rounds | Do not require ordinary validity for every slot | [[Rabia-2021]] |
+
+| [[CURP]] | Client completes after record acceptance by all `f` witnesses plus master result, or after backup sync to `f` backups | Request-level commutativity and exactly-once RPC ids | Completed operations survive master crash and replay cannot contradict visible results | Fast path requires all witnesses; slow path waits for backup replication | Treat client completion separately from later ordered backup commit | [[CURP-2019]] |
 
 ## Main patterns
 Fast commit rules need stronger evidence than slow commit rules because recovery must be able to distinguish a real commit from a merely possible partial execution.

@@ -1,12 +1,15 @@
 # New Protocol Ideas
 
-These notes are speculative research prompts derived from the current wiki, not claims about existing papers. Sourced facts are linked to wiki pages. Candidate mechanisms are labeled as ideas or hypotheses and need proofs or counterexamples before they should be treated as protocols.
+These notes are speculative research prompts derived from a reread of the current wiki, not claims about existing papers. Sourced facts are linked to wiki pages. Candidate mechanisms are labeled as ideas or hypotheses and need proofs or counterexamples before they should be treated as protocols.
+
+Last refreshed: 2026-07-02.
 
 ## Evidence Matrix
 
 | Protocol | Observed limitation | Shared assumption | Source page | Confidence |
 |---|---|---|---|---|
 | [[FastPaxos]] | Fast rounds need collision-free proposals or recovery must choose a safe value. | Fast evidence is a value-level quorum certificate. | [[fast-paths]], [[recovery-rules]], [[quorum-intersection]] | High |
+| [[GPaxos]] | Fast ballots tolerate compatible c-struct evidence but still need higher-ballot ordering after incompatible histories. | Compatibility can replace value equality only when recovery preserves every lower-ballot choosable c-struct by extension. | [[GPaxos]], [[fast-paths]], [[recovery-rules]], [[proof-techniques]] | High |
 | [[EPaxos]] | Fast commit needs matching attributes, and evaluation notes conflict/tail-latency sensitivity. | Leaderless fast SMR commits dependency metadata observed before recovery evidence is stable. | [[fast-paths]], [[conflict-handling]], [[leaderless-protocols]] | High |
 | [[EPaxosStar]] | Corrected recovery uses validation and may commit `Nop`, making recovery central and complex. | Safety is repaired by validating possibly omitted conflicting commands. | [[EPaxosStar]], [[recovery-rules]], [[proof-techniques]] | High |
 | [[Mencius]] | A failed or idle owner can leave gaps until skip or revocation. | Slot ownership prevents conflicts by assigning authority in advance. | [[Mencius]], [[leader-roles]], [[commit-rules]] | High |
@@ -15,14 +18,15 @@ These notes are speculative research prompts derived from the current wiki, not 
 | [[SwiftPaxos]] | Leader-including fast quorums reduce ambiguity but reintroduce leader centrality. | Fast evidence is shaped around ballot-leader participation. | [[SwiftPaxos]], [[quorum-systems]], [[leader-roles]] | Medium |
 | [[Pando]] | Erasure-coded recovery must distinguish value identity from enough splits. | Recovery evidence can be coded and reconstructible rather than full-value. | [[Pando]], [[quorum-systems]], [[recovery-rules]] | Medium |
 | [[Rabia]] | Weak validity avoids recovery by allowing `bottom` slots, with log density depending on alignment. | Ambiguity can be resolved by forfeiting a slot and retrying. | [[Rabia]], [[fast-paths]], [[commit-rules]] | High |
+| [[CURP]] | The 1 RTT path needs all witnesses and commutative unsynced operations; recovery must pick one witness rather than merge witness sets. | Unordered durability can replace ordered replication only when replay is order-independent and duplicate-safe. | [[CURP]], [[fast-paths]], [[recovery-rules]], [[proof-techniques]] | High |
 
 ## Limitation Clusters
 
 ### Cluster 1: Fast Evidence Is Too Brittle
 
-**Shared weakness:** Fast paths often require identical values, identical dependency metadata, or leader-shaped evidence.
+**Shared weakness:** Fast paths often require identical values, compatible histories, identical dependency metadata, leader-shaped evidence, or all-witness durability.
 
-**Protocols exhibiting it:** [[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], with [[Atlas]] as a partial exception.
+**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[CURP]], with [[Atlas]] as a partial exception.
 
 **Shared paradigm / hidden assumption:** A fast decision is safe only if the evidence already looks almost like a final decision.
 
@@ -34,9 +38,9 @@ These notes are speculative research prompts derived from the current wiki, not 
 
 ### Cluster 2: Recovery Carries Hidden Complexity
 
-**Shared weakness:** Recovery must distinguish chosen, maybe chosen, and merely observed states.
+**Shared weakness:** Recovery must distinguish chosen, maybe chosen, merely observed, compatible, reconstructible, and replayable states.
 
-**Protocols exhibiting it:** [[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]].
+**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[CURP]].
 
 **Shared paradigm / hidden assumption:** Recovery is a later cleanup phase rather than a first-class part of the fast commit predicate.
 
@@ -62,9 +66,9 @@ These notes are speculative research prompts derived from the current wiki, not 
 
 ### Cluster 4: Dependency Metadata Becomes the Log
 
-**Shared weakness:** Dependency-based protocols commit quickly but may execute late due to dependency chains or SCCs.
+**Shared weakness:** Partial-order protocols commit quickly but may execute late or recover painfully because the metadata becomes the effective log.
 
-**Protocols exhibiting it:** [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]].
+**Protocols exhibiting it:** [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]].
 
 **Shared paradigm / hidden assumption:** It is cheaper to commit partial order metadata than a total order.
 
@@ -76,9 +80,9 @@ These notes are speculative research prompts derived from the current wiki, not 
 
 ### Cluster 5: Quorum Size Is Treated As Static
 
-**Shared weakness:** Fast, slow, and recovery quorum sizes are fixed for broad failure assumptions.
+**Shared weakness:** Fast, slow, recovery, and witness quorum sizes are fixed for broad failure assumptions.
 
-**Protocols exhibiting it:** [[FastPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]].
+**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]].
 
 **Shared paradigm / hidden assumption:** A deployment picks one failure budget and one quorum algebra.
 
@@ -104,9 +108,9 @@ These notes are speculative research prompts derived from the current wiki, not 
 
 ### Cluster 7: Ambiguity Is Either Recovered Or Forfeited
 
-**Shared weakness:** Collisions trigger recovery, validation, slow paths, or `bottom` slots.
+**Shared weakness:** Collisions trigger recovery, validation, slow paths, compatible-history ordering, witness sync, or `bottom` slots.
 
-**Protocols exhibiting it:** [[FastPaxos]], [[EPaxosStar]], [[Atlas]], [[Rabia]].
+**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[Rabia]], [[CURP]].
 
 **Shared paradigm / hidden assumption:** Ambiguity must be resolved at the same granularity as the original slot or command id.
 
@@ -134,7 +138,7 @@ These notes are speculative research prompts derived from the current wiki, not 
 
 **Shared weakness:** The current wiki has limited ingested detail on reconfiguration; protocols are mostly described over static membership.
 
-**Protocols exhibiting it:** [[Atlas]], [[Mencius]], [[PigPaxos]], [[Rabia]], and others as currently summarized.
+**Protocols exhibiting it:** [[Atlas]], [[Mencius]], [[PigPaxos]], [[Rabia]], [[CURP]], and others as currently summarized.
 
 **Shared paradigm / hidden assumption:** Membership changes are a layer around the protocol rather than part of each commit certificate.
 
@@ -165,7 +169,7 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | # | Idea | Targeted limitation | Closest related protocols | Paradigm shift and core mechanism | Invariant to preserve | Main risk / proof obligation | Red-team |
 |---:|---|---|---|---|---|---|---|
 | 1 | Recoverable-Fast-Union Paxos | Exact fast matching is brittle. | [[EPaxos]], [[Atlas]] | Replace exact dependency equality with a frequency-threshold union certificate parameterized by the recovery quorum. | Conflicting committed commands are dependency-visible. | Prove every recoverer reconstructs the same union or a safe superset. | Top candidate |
-| 2 | Self-Describing Fast Certificates | Recovery is under-specified at commit time. | [[FastPaxos]], [[EPaxosStar]] | Fast commits include a compact witness describing how later recovery must interpret partial evidence. | One command id commits one payload/dependency object. | Certificate may be as costly as slow-path evidence. | Promising |
+| 2 | Self-Describing Fast Certificates | Recovery is under-specified at commit time. | [[FastPaxos]], [[GPaxos]], [[EPaxosStar]] | Fast commits include a compact witness describing how later recovery must interpret partial evidence. | One command id commits one payload/dependency object, or one compatible history extension. | Certificate may be as costly as slow-path evidence. | Promising |
 | 3 | Validation-First EPaxos | Validation appears only during recovery. | [[EPaxosStar]], [[EPaxos]] | Add cheap pre-validation summaries during PreAccept so recovery validates fewer omitted conflicts. | Visibility for conflicting committed commands. | Hidden cost in metadata exchange and false negatives. | Promising |
 | 4 | Fast Path With Recovery Budget Tags | One quorum algebra fits all conflicts. | [[EPaxosStar]], [[Atlas]] | Tag each command with an intended recovery budget and choose fast predicate accordingly. | Recovery quorums intersect the chosen fast evidence. | Tags could become unsafe if failure budget changes mid-command. | Promising |
 | 5 | Dependency Checksum Consensus | Dependency equality is expensive to compare and transmit. | [[EPaxos]], [[SwiftPaxos]] | Use authenticated or deterministic dependency-set digests as fast equality evidence, fetch full deps only on mismatch. | Digest collision model must preserve dependency identity. | Requires trusted collision resistance or exact deterministic hashes in model. | Weak |
@@ -174,13 +178,13 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | 8 | Leader-Including Optional Fast Quorums | Leader inclusion helps recovery but hurts locality. | [[SwiftPaxos]], [[Atlas]] | Fast quorums include either the ballot leader or a recovery delegate elected for the command class. | Delegate participation must substitute for leader intersection. | Delegate election may add a hidden leader. | Promising |
 | 9 | Fast-Quorum Evidence Escrow | Recovery loses original fast-quorum shape. | [[Atlas]], [[FastPaxos]] | Fast quorum members escrow signed summaries to a small durable witness set that recovery queries first. | Escrow cannot create votes, only preserve evidence. | Witness failures and durability assumptions complicate model. | Weak |
 | 10 | Negative-Evidence Fast Commit | Protocols record what was seen, not what was absent. | [[EPaxosStar]], [[Rabia]] | Fast certificate includes bounded negative evidence for known non-conflicts or no-majority observations. | Absence claims cannot hide concurrent conflicting commits. | Hard to prove absence in asynchronous systems. | Reject |
-| 11 | Recovery-Native Paxos | Recovery is a separate cleanup phase. | [[FastPaxos]], [[EPaxosStar]], [[Pando]] | Define each commit certificate as a recovery program with inputs, quorum type, and safe-selection rule. | Executing the recovery program preserves any chosen value. | Very abstract; may not yield a faster protocol. | Top candidate |
-| 12 | Nop-With-Reason SMR | `Nop` or `bottom` loses useful information. | [[EPaxosStar]], [[Rabia]], [[Mencius]] | Replace null decisions with typed nulls carrying retry, dependency, or ownership evidence. | Null result cannot decide a conflicting command. | Typed nulls may leak into validity semantics. | Promising |
+| 11 | Recovery-Native Paxos | Recovery is a separate cleanup phase. | [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Pando]], [[CURP]] | Define each commit certificate as a recovery program with inputs, quorum type, replay/reconstruction type, and safe-selection rule. | Executing the recovery program preserves any chosen value or replay-safe unordered suffix. | Very abstract; may not yield a faster protocol. | Top candidate |
+| 12 | Nop-With-Reason SMR | `Nop`, `SKIP`, or `bottom` loses useful information if treated as plain emptiness. | [[EPaxosStar]], [[Rabia]], [[Mencius]] | Replace null decisions with typed nulls carrying retry, dependency, ownership, or weak-validity evidence. | Null result cannot decide or hide a conflicting command. | Typed nulls may leak into validity semantics. | Promising |
 | 13 | Recoverable Partial Order Slots | Ambiguity is per command id or slot. | [[EPaxosStar]], [[Rabia]] | Ambiguous recovery commits a partial-order constraint rather than a command or null. | Later commands cannot violate committed constraints. | Constraint accumulation may block progress. | Promising |
 | 14 | Evidence-Carrying Slow Path | Slow path discards why fast path failed. | [[EPaxos]], [[Atlas]] | Slow Accept includes the failed fast evidence so future recovery can avoid revalidation. | Slow quorum acceptance dominates earlier fast ambiguity. | Metadata growth on conflict-heavy workloads. | Promising |
-| 15 | Phase-1b Dependency Reconstruction | Pando-style reconstruction for SMR metadata. | [[Pando]], [[Atlas]] | Store dependency metadata in coded fragments; recovery needs enough fragments to reconstruct a safe dep set. | Reconstructed dep object equals the committed identity. | Coded metadata may be larger and complex to update. | Promising |
+| 15 | Phase-1b Dependency Reconstruction | Pando-style reconstruction for SMR metadata. | [[Pando]], [[Atlas]], [[GPaxos]] | Store dependency or c-struct metadata in coded fragments; recovery needs enough fragments to reconstruct a safe dep set or compatible history. | Reconstructed metadata object equals the committed identity or extends every lower safe history. | Coded metadata may be larger and complex to update. | Promising |
 | 16 | Recovery Quorum Hints | Recoverers search too broadly. | [[Atlas]], [[EPaxosStar]] | Commit certificates name preferred recovery quorums plus fallback algebra. | Hints cannot be required for safety. | Liveness may degrade if hints are stale. | Weak |
-| 17 | Monotone Recovery Lattice | Recovery case splits are brittle. | [[EPaxosStar]], [[Atlas]], [[Pando]] | Model recovery values as a join-semilattice: accepted value beats reconstructible fast value beats null. | Join result is unique and safe across quorum evidence. | Need show lattice order matches actual safety, not wishful ranking. | Top candidate |
+| 17 | Monotone Recovery Lattice | Recovery case splits are brittle. | [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[Pando]], [[CURP]] | Model recovery values as a join-semilattice: accepted value, compatible extension, reconstructible fast value, replayable suffix, or null. | Join result is unique and safe across quorum evidence. | Need show lattice order matches actual safety, not wishful ranking. | Top candidate |
 | 18 | Waiting-Certificate Recovery | Recovery cycles need explicit breaking. | [[EPaxosStar]] | Generalize `Waiting` into a certificate that transfers blocked recovery obligations to another command. | Waiting cannot mask an already committed conflicting command. | Could create long chains and liveness hazards. | Promising |
 | 19 | Recover-Then-Validate Batching | Per-command validation repeats work. | [[EPaxosStar]], [[Atlas]] | Batch recovery of conflicting commands, validate the induced dependency subgraph once. | Each command id still has a single decision. | Batch graph may include commands that never commit. | Promising |
 | 20 | Minimal-Counterexample Recovery | Recovery proofs are hard to audit. | [[EPaxosStar]], [[FastPaxos]] | Recovery coordinator emits the smallest ambiguity set that justifies fallback or null. | If ambiguity set is empty, recovered value must be unique. | More of a proof/debug artifact than a protocol. | Weak |
@@ -197,8 +201,8 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | 31 | Bounded Dependency SMR | Dependency metadata grows under contention. | [[EPaxos]], [[Atlas]], [[SwiftPaxos]] | Cap dependency sets by replacing older edges with checkpointed conflict summaries. | Summary implies all omitted ordering constraints. | Summary correctness is hard under concurrent commits. | Top candidate |
 | 32 | Dependency Garbage Certificates | Execution waits on old dependency chains. | [[EPaxos-Revisited-2021]], [[Atlas]] | Replicas periodically certify that a dependency frontier can replace explicit ancestors. | Frontier preserves order of all non-commuting committed commands. | Certificate construction may require global coordination. | Promising |
 | 33 | SCC-Aware Fast Commit | Commit and execution readiness diverge. | [[EPaxos]], [[Atlas]], [[EPaxosStar]] | Fast predicate estimates whether new deps create large SCCs and falls back early if so. | Fallback cannot change safety, only metadata shape. | Performance heuristic, not safety improvement. | Weak |
-| 34 | Typed Conflict Dependencies | All conflicts are treated alike. | [[EPaxos]], [[SwiftPaxos]] | Dependencies carry conflict type such as read-write, write-write, or semantic commutativity class. | Execution order respects non-commuting pairs. | Application semantics must be trusted and stable. | Promising |
-| 35 | Commutativity-Credit Consensus | Optional out-of-order commit is underused. | [[Mencius]], [[EPaxos]] | Commands earn credits proving they commute with a certified frontier, reducing required deps. | Credits cannot permit reordered non-commuting commands. | Requires application-provided commutativity oracle. | Promising |
+| 34 | Typed Conflict Dependencies | All conflicts are treated alike. | [[GPaxos]], [[EPaxos]], [[SwiftPaxos]], [[CURP]] | Dependencies carry conflict type such as read-write, write-write, or semantic commutativity class. | Execution order respects non-commuting pairs, while commuting commands may use compatibility or unordered replay. | Application semantics must be trusted and stable. | Promising |
+| 35 | Commutativity-Credit Consensus | Optional out-of-order commit is underused. | [[GPaxos]], [[Mencius]], [[EPaxos]], [[CURP]] | Commands earn credits proving they commute with a certified frontier, reducing required deps or witness-sync pressure. | Credits cannot permit reordered non-commuting commands. | Requires application-provided commutativity oracle. | Promising |
 | 36 | Dependency Bloom Fast Path | Dependency sets are large. | [[EPaxos]], [[Atlas]] | Use conservative Bloom filters for fast conflict visibility; false positives add deps, false negatives forbidden. | No missing conflict edge. | Needs exact no-false-negative construction and fetch path. | Weak |
 | 37 | Path-Compressed Swift Dependencies | Dependency paths are richer than direct deps. | [[SwiftPaxos]] | Commit path certificates that compress repeated dependency prefixes across commands. | Acyclic committed dependency graph. | Compression may hide cycles unless validated. | Promising |
 | 38 | Dependency Debt Scheduler | Protocol commits now, execution pays later. | [[EPaxos-Revisited-2021]], [[Atlas]] | Treat unresolved dependency chains as debt and throttle fast commits that increase predicted debt. | Throttling does not affect safety. | Mainly evaluation policy; novelty limited. | Weak |
@@ -209,7 +213,7 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | 43 | Regional Outage Atlas | Atlas blocks above configured `f`. | [[Atlas]] | Dynamically reduce geographic spread and switch to a lower-latency partition-safe mode with explicit availability loss. | Safety across unavailable regions through epoch fencing. | May sacrifice liveness for minority regions. | Promising |
 | 44 | Flexible Dependency Quorums | Different commands need different quorum shapes. | [[Atlas]], [[EPaxosStar]] | Choose fast quorum size from conflict/failure class, then record the chosen algebra in the certificate. | Recovery derives intersections from recorded class. | Per-command algebra increases proof surface. | Promising |
 | 45 | Read-Optimized SMR Quorums | Pando optimizes storage reads, SMR less so. | [[Pando]], [[Atlas]] | Add read-only command certificates that use smaller discovery quorums plus write-back when state is ambiguous. | Reads return linearizable state. | Needs integration with command log order. | Promising |
-| 46 | Split Recovery Quorums | Recovery does multiple jobs with one quorum. | [[EPaxosStar]], [[Pando]] | Use separate quorums for value identity, dependency reconstruction, and liveness handoff. | Combined evidence implies one safe value/dependency object. | Intersection matrix may be hard to state. | Promising |
+| 46 | Split Recovery Quorums | Recovery does multiple jobs with one quorum. | [[EPaxosStar]], [[Pando]], [[CURP]] | Use separate quorums for value identity, dependency reconstruction, witness replay, and liveness handoff. | Combined evidence implies one safe value/dependency object or replay-safe suffix. | Intersection matrix may be hard to state. | Promising |
 | 47 | Quorum Algebra Synthesizer Protocol | Quorum formulas are manually derived. | [[quorum-intersection]] | Treat quorum choice as a generated proof artifact consumed by the protocol implementation. | Generated quorums satisfy stated intersections. | Tooling contribution, not protocol unless integrated. | Weak |
 | 48 | Failure-Budget Negotiated Commands | `e` and `f` are global in EPaxos*. | [[EPaxosStar]] | Clients or replicas request fast-path failure budget per command class. | Budget certificate binds quorum sizes for that command. | Users may select unsafe or unavailable budgets. | Promising |
 | 49 | Weighted Fast Recovery | Static sites are not equal in WANs. | [[Atlas]], [[Pando]] | Use weighted quorums where recovery weight corresponds to site reliability or coded split availability. | Weighted intersections reconstruct evidence. | Needs exact weighted quorum theorem. | Promising |
@@ -224,7 +228,7 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | 58 | Proof-Carrying Aggregates | Aggregates are opaque in many models. | [[PigPaxos]] | Every aggregate includes a proof of unique voters and omitted voter status. | Paxos majority remains over unique acceptors. | Certificate overhead may dominate. | Promising |
 | 59 | Relay-Buffered Fast Retries | Failed fast path loses partial work. | [[EPaxos]], [[PigPaxos]] | Relays buffer partial PreAccept/FastAck evidence for immediate retry or recovery. | Buffered evidence cannot outlive its ballot/epoch unsafely. | Stale buffers could confuse recovery. | Promising |
 | 60 | Topology-Adaptive Mencius Relays | Rotating owners face WAN asymmetry. | [[Mencius]], [[PigPaxos]] | Owners use topology-aware relay trees while preserving owner-only non-null values. | Relay layer refines the same simple consensus instance. | Engineering dominated unless proof of tail reduction is clear. | Weak |
-| 61 | Ambiguity Credit Slots | `bottom` and `Nop` waste log space. | [[Rabia]], [[EPaxosStar]] | Null slots produce credits that prioritize or constrain retried commands. | Credits cannot force an unsafe later decision. | Credit semantics may become hidden state. | Promising |
+| 61 | Ambiguity Credit Slots | `bottom`, `Nop`, and forced witness sync waste partial evidence. | [[Rabia]], [[EPaxosStar]], [[CURP]] | Null or slow-sync outcomes produce credits that prioritize or constrain retried commands. | Credits cannot force an unsafe later decision. | Credit semantics may become hidden state. | Promising |
 | 62 | Batch Forfeit Consensus | Ambiguous individual slots could be handled together. | [[Rabia]] | Decide `bottom` for a batch only when no majority-supported ordering exists, then reshuffle batch requests. | Agreement on each slot or batch position. | Larger forfeits hurt latency under mild contention. | Weak |
 | 63 | Constraint-Carrying Bottom | Null slots can preserve conflict information. | [[Rabia]], [[EPaxos]] | A `bottom` decision carries a set of observed conflicting candidates as future scheduling constraints. | Constraints cannot imply a decided command. | Validity and log compaction become complex. | Promising |
 | 64 | Probabilistic Dependency Recovery | Randomization avoids failover in Rabia. | [[Rabia]], [[EPaxosStar]] | Use common coin to break recovery cycles among conflicting dependency recoveries. | Random choice must select only validated safe candidates. | Randomness cannot repair unsafe candidate sets. | Promising |
@@ -254,13 +258,13 @@ Legend: `Top candidate` means worth modeling first; `Promising` means researchab
 | 88 | Rolling Fast-Quorum Replacement | Fast quorums are static within a command. | [[FastPaxos]], [[SwiftPaxos]] | Replace fast-quorum members gradually with overlap certificates instead of stopping fast path. | Replacement preserves fast-fast and fast-recovery intersections. | High proof complexity. | Weak |
 | 89 | Reconfiguration As Dependency | Membership changes conflict with all commands. | [[EPaxos]], [[Mencius]] | Treat config changes as commands with universal conflict dependencies and special execution barriers. | No command executes across config boundary without barrier. | Conservative, may be known and slow. | Weak |
 | 90 | Configuration-Leased Conflict Classes | Shard authority and membership together. | [[Mencius]], [[EPaxos]] | Each conflict class has a config epoch and leader/leaderless mode, changed by quorum certificate. | Class epochs compose into one serializable SMR history. | Cross-class transactions are hard. | Promising |
-| 91 | Evidence Algebra SMR | Proof objects are bespoke. | [[proof-techniques]] | Build SMR protocol around reusable evidence operations: choose, validate, reconstruct, forfeit, refine. | Algebra laws imply agreement and recoverability. | Too abstract unless instantiated. | Top candidate |
+| 91 | Evidence Algebra SMR | Proof objects are bespoke. | [[proof-techniques]] | Build SMR protocol around reusable evidence operations: choose, validate, reconstruct, extend, replay, forfeit, refine. | Algebra laws imply agreement, recoverability, compatibility, and deterministic execution. | Too abstract unless instantiated. | Top candidate |
 | 92 | Adopt-Commit Dependency Layer | Fast evidence resembles adopt-commit. | [[adopt-commit-abstraction]], [[EPaxosStar]] | Express dependency fast path as adopt-commit: commit if unambiguous, adopt if recoverable. | Adopted value must be safe for later commit. | Need exact abstraction page expansion. | Promising |
 | 93 | Refinement-First PigPaxos | Transport and consensus proof separation is useful. | [[PigPaxos]], [[proof-techniques]] | Design overlays by first proving refinement to an abstract vote-collector automaton. | Abstract majority proof unchanged. | Methodology more than protocol. | Weak |
-| 94 | Unified Null Semantics | `Nop`, `SKIP`, and `bottom` differ. | [[Mencius]], [[EPaxosStar]], [[Rabia]] | Define typed empty outcomes with explicit validity and retry semantics. | Empty outcomes cannot hide conflicting concrete decisions. | May blur protocol-specific assumptions. | Promising |
+| 94 | Unified Null Semantics | `Nop`, `SKIP`, and `bottom` differ. | [[Mencius]], [[EPaxosStar]], [[Rabia]] | Define typed empty outcomes with explicit validity, ownership, retry, and weak-validity semantics. | Empty outcomes cannot hide conflicting concrete decisions. | May blur protocol-specific assumptions. | Promising |
 | 95 | Dependency Visibility Logic | Visibility proofs recur. | [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]] | Make cross-command visibility a first-class logic independent of per-instance agreement. | Agreement plus visibility implies deterministic execution. | Logic must cover SCCs, paths, and unions. | Top candidate |
 | 96 | Recovery Counterexample Generator | Bugs hide in recovery. | [[EPaxosStar]], [[rocq-modeling-notes]] | Protocol design includes a small model that searches for ambiguous recovery evidence before proof. | No accepted candidate lacks a recovery search pass. | Tooling, not a protocol mechanism. | Promising |
-| 97 | Certificate Normal Form | Certificates differ across protocols. | [[FastPaxos]], [[Pando]], [[Rabia]] | Normalize evidence into fields: electorate, epoch, object identity, payload, reconstruction rule, fallback. | Normal form preserves original protocol safety semantics. | Could oversimplify distinct mechanisms. | Promising |
+| 97 | Certificate Normal Form | Certificates differ across protocols. | [[FastPaxos]], [[GPaxos]], [[Pando]], [[Rabia]], [[CURP]] | Normalize evidence into fields: electorate, epoch, object identity, payload, compatibility/reconstruction/replay rule, fallback. | Normal form preserves original protocol safety semantics. | Could oversimplify distinct mechanisms. | Promising |
 | 98 | Proof-Carrying Quorum Changes | Quorum formulas are easy to miscopy. | [[quorum-intersection]] | Quorum changes carry machine-checkable intersection lemmas with the certificate. | Runtime accepts only certificates whose lemmas match policy. | Runtime proof checking may be heavy. | Weak |
 | 99 | Visibility-Preserving Compression | Formal models struggle with metadata growth. | [[EPaxos-Revisited-2021]], [[Atlas]] | Compress dependency histories only via transformations proven to preserve visibility. | Compression is a simulation relation on executions. | Finding useful transformations may be hard. | Promising |
 | 100 | Protocol Kernel With Pluggable Evidence | Ideas combine dimensions unsafely. | All ingested protocols | Define a small SMR kernel parameterized by evidence type, quorum algebra, recovery rule, and execution relation. | Kernel theorem: valid plugin implies agreement, validity, recoverability, and deterministic execution. | Very ambitious; plugin obligations may be as hard as full proofs. | Top candidate |
