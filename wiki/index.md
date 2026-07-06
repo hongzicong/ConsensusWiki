@@ -23,7 +23,7 @@
 - [[PigPaxos]] - Multi-Paxos with randomized relay followers that aggregate acknowledgements.
 - [[Atlas]] - Leaderless dependency SMR parameterized by tolerated concurrent site failures `f`.
 - [[Pando]] - Paxos-style erasure-coded storage protocol.
-- [[SwiftPaxos]] - WAN SMR using FastAck/SlowAck dependency evidence.
+- [[SwiftPaxos]] - WAN SMR using leader-including fast quorums, `FastAck`/`SlowAck`, and client-visible dependency-path evidence.
 - [[Rabia]] - Leaderless randomized SMR with weak multi-valued consensus.
 - [[CURP]] - Primary-backup protocol that completes commutative updates in 1 RTT via witnesses.
 
