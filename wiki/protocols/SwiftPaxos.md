@@ -61,6 +61,8 @@ Message flow:
 
 In the stable, contention-free case this gives two message delays from submission: one delay for `Propagate`, one delay for matching `FastAck`/`Reply` evidence.
 
+Read-only optimization: the speculative execution step does not have to run at the leader. A read-only command can be tentatively executed at any fast-quorum replica, and the client accepts that tentative result only when the fast-quorum dependency-path evidence matches. This reduces leader load for read-heavy workloads while keeping the command ordered through the same dependency evidence.
+
 ## Slow path
 SwiftPaxos has two slow-path commit shapes.
 
@@ -98,6 +100,7 @@ Requires enough nonfaulty replicas/data sites and eventual stable recovery/leade
 
 ## Strengths
 Lower latency in its target common case.
+Read-only commands can be speculatively served by nearby fast-quorum replicas, reducing leader saturation in read-heavy workloads.
 
 ## Weaknesses
 More complex recovery and quorum reasoning than classic Paxos.

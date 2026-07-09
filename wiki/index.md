@@ -10,7 +10,7 @@
 - [[PigPaxos-2021]] - Multi-Paxos communication-overlay protocol using randomized relay aggregation.
 - [[Atlas-2020]] - Leaderless planet-scale SMR with fast quorum `floor(n/2) + f` and recoverable dependency unions.
 - [[Pando-2020]] - Erasure-coded geo-storage with Phase 1a/1b/2 quorums.
-- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums.
+- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums and optimized read-only execution at fast-quorum replicas.
 - [[Rabia-2021]] - Randomized leaderless SMR using Weak-MVC and forfeited `⊥` slots.
 - [[CURP-2019]] - Primary-backup fast replication using commutative unordered witness durability.
 
@@ -23,7 +23,7 @@
 - [[PigPaxos]] - Multi-Paxos with randomized relay followers that aggregate acknowledgements.
 - [[Atlas]] - Leaderless dependency SMR parameterized by tolerated concurrent site failures `f`.
 - [[Pando]] - Paxos-style erasure-coded storage protocol.
-- [[SwiftPaxos]] - WAN SMR using leader-including fast quorums, `FastAck`/`SlowAck`, and client-visible dependency-path evidence.
+- [[SwiftPaxos]] - WAN SMR using leader-including fast quorums, `FastAck`/`SlowAck`, client-visible dependency-path evidence, and distributed speculative reads.
 - [[Rabia]] - Leaderless randomized SMR with weak multi-valued consensus.
 - [[CURP]] - Primary-backup protocol that completes commutative updates in 1 RTT via witnesses.
 

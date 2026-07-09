@@ -28,7 +28,7 @@ Crash/non-Byzantine failures with at most `f` faulty replicas. Liveness uses an 
 Designed for WANs with heterogeneous latencies. Safety is asynchronous; liveness follows after recovery stabilizes at a ballot with a correct trusted leader.
 
 ## Main idea
-Commands carry dependencies on conflicting commands. Replicas agree on dependency paths using `FastAck` and `SlowAck`; execution follows the acyclic dependency graph.
+Commands carry dependencies on conflicting commands. Replicas agree on dependency paths using `FastAck` and `SlowAck`; execution follows the acyclic dependency graph. The implementation can also execute read-only commands optimistically at any fast-quorum replica, rather than only at the leader, while the client still waits for matching dependency-path evidence.
 
 ## Protocol roles
 Each ballot has a fixed leader `leader(b)`. Other replicas are followers. A replica may belong to fast and/or slow quorums for a ballot.
@@ -44,6 +44,8 @@ Clients broadcast `Propagate(c)`. Fast quorum replicas compute dependencies from
 
 ## Fast path
 A replica commits when it receives matching `FastAck` messages from all members of some fast quorum and the command's dependencies are committed. Under favorable conditions, execution can complete within two message delays from submission.
+
+Read-only optimization: a read-only command may be speculatively executed at any fast-quorum replica. The contacted replica computes the tentative read result from its local state plus relevant pending commands; the client accepts that result on the fast path only after other fast-quorum members report matching dependency paths. This distributes read load away from the leader without removing the quorum evidence needed for linearizable ordering.
 
 ## Slow path
 If a fast quorum replica disagrees with the leader's dependencies, it can send `SlowAck`, adopting/correcting to the leader's proposal. A command can commit with matching `FastAck`/`SlowAck` evidence from a fast quorum, or with `SlowAck`s from a slow quorum.

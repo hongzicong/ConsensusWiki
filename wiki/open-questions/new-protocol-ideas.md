@@ -1,367 +1,214 @@
+---
+type: open-question
+status: speculative
+tags: [brainstorm, smr, consensus, protocol-design]
+---
+
 # New Protocol Ideas
 
-These notes are speculative research prompts derived from a reread of the current wiki, not claims about existing papers. Sourced facts are linked to wiki pages. Candidate mechanisms are labeled as ideas or hypotheses and need proofs or counterexamples before they should be treated as protocols.
+These are defect-driven SMR and consensus candidates inferred from the current wiki. They are not claimed safe. Each item is an `Idea`, `Hypothesis`, or `Inference` until its quorum intersection, commit rule, and recovery rule are made explicit and checked against a model.
 
-Last refreshed: 2026-07-02.
+## Source Pages Reread
+
+Core sources: [[protocol-catalog]], [[quorum-systems]], [[fast-paths]], [[commit-rules]], [[recovery-rules]], [[conflict-handling]], [[leader-roles]], [[proof-techniques]], [[timing-assumptions]], [[fault-models]], [[paxos-family]], [[fast-consensus]], [[leaderless-protocols]], [[FastPaxos-EPaxos-SwiftPaxos]], [[quorum-intersection]], [[adopt-commit-abstraction]], [[rocq-modeling-notes]], and [[unresolved-confusions]].
+
+Main protocol anchors: [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], and [[CURP]].
 
 ## Evidence Matrix
 
-| Protocol | Observed limitation | Shared assumption | Source page | Confidence |
-|---|---|---|---|---|
-| [[FastPaxos]] | Fast rounds need collision-free proposals or recovery must choose a safe value. | Fast evidence is a value-level quorum certificate. | [[fast-paths]], [[recovery-rules]], [[quorum-intersection]] | High |
-| [[GPaxos]] | Fast ballots tolerate compatible c-struct evidence but still need higher-ballot ordering after incompatible histories. | Compatibility can replace value equality only when recovery preserves every lower-ballot choosable c-struct by extension. | [[GPaxos]], [[fast-paths]], [[recovery-rules]], [[proof-techniques]] | High |
-| [[EPaxos]] | Fast commit needs matching attributes, and evaluation notes conflict/tail-latency sensitivity. | Leaderless fast SMR commits dependency metadata observed before recovery evidence is stable. | [[fast-paths]], [[conflict-handling]], [[leaderless-protocols]] | High |
-| [[EPaxosStar]] | Corrected recovery uses validation and may commit `Nop`, making recovery central and complex. | Safety is repaired by validating possibly omitted conflicting commands. | [[EPaxosStar]], [[recovery-rules]], [[proof-techniques]] | High |
-| [[Mencius]] | A failed or idle owner can leave gaps until skip or revocation. | Slot ownership prevents conflicts by assigning authority in advance. | [[Mencius]], [[leader-roles]], [[commit-rules]] | High |
-| [[PigPaxos]] | Relays reduce leader load but keep a single ordering leader and can add retry tail cases. | Transport aggregation is separated from consensus authority. | [[PigPaxos]], [[leader-roles]], [[recovery-rules]] | High |
-| [[Atlas]] | Fast path weakens exact matching but requires recoverable dependency unions and a chosen failure budget `f`. | Fast evidence must be reconstructible after up to `f` failures. | [[Atlas]], [[fast-paths]], [[quorum-intersection]] | High |
-| [[SwiftPaxos]] | Leader-including fast quorums reduce ambiguity but reintroduce leader centrality. | Fast evidence is shaped around ballot-leader participation. | [[SwiftPaxos]], [[quorum-systems]], [[leader-roles]] | Medium |
-| [[Pando]] | Erasure-coded recovery must distinguish value identity from enough splits. | Recovery evidence can be coded and reconstructible rather than full-value. | [[Pando]], [[quorum-systems]], [[recovery-rules]] | Medium |
-| [[Rabia]] | Weak validity avoids recovery by allowing `bottom` slots, with log density depending on alignment. | Ambiguity can be resolved by forfeiting a slot and retrying. | [[Rabia]], [[fast-paths]], [[commit-rules]] | High |
-| [[CURP]] | The 1 RTT path needs all witnesses and commutative unsynced operations; recovery must pick one witness rather than merge witness sets. | Unordered durability can replace ordered replication only when replay is order-independent and duplicate-safe. | [[CURP]], [[fast-paths]], [[recovery-rules]], [[proof-techniques]] | High |
-
-## Limitation Clusters
-
-### Cluster 1: Fast Evidence Is Too Brittle
-
-**Shared weakness:** Fast paths often require identical values, compatible histories, identical dependency metadata, leader-shaped evidence, or all-witness durability.
-
-**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[SwiftPaxos]], [[CURP]], with [[Atlas]] as a partial exception.
-
-**Shared paradigm / hidden assumption:** A fast decision is safe only if the evidence already looks almost like a final decision.
-
-**Assumption type:** Mechanism and proof.
-
-**Causal bottleneck:** Because protocols make fast evidence double as recovery evidence, they reject useful partial agreement under benign disagreement.
-
-**Design opportunity:** Define fast evidence as a reconstructible object, not necessarily a matching object.
-
-### Cluster 2: Recovery Carries Hidden Complexity
-
-**Shared weakness:** Recovery must distinguish chosen, maybe chosen, merely observed, compatible, reconstructible, and replayable states.
-
-**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[CURP]].
-
-**Shared paradigm / hidden assumption:** Recovery is a later cleanup phase rather than a first-class part of the fast commit predicate.
-
-**Assumption type:** Proof.
-
-**Causal bottleneck:** Because the common path records just enough to go fast, recovery must reconstruct intent from incomplete traces.
-
-**Design opportunity:** Commit only evidence whose recovery certificate is already self-describing.
-
-### Cluster 3: Leader Avoidance Moves Cost Elsewhere
-
-**Shared weakness:** Removing a stable leader often moves ordering cost into dependency tracking, validation, randomized retries, or execution delay.
-
-**Protocols exhibiting it:** [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[Rabia]], [[Mencius]].
-
-**Shared paradigm / hidden assumption:** Load balance requires distributing ordering authority at command or slot granularity.
-
-**Assumption type:** Mechanism and workload.
-
-**Causal bottleneck:** Because authority is spread before conflict structure is known, protocols later pay to reconcile conflicting local views.
-
-**Design opportunity:** Allocate authority adaptively by conflict class, evidence quality, or observed locality.
-
-### Cluster 4: Dependency Metadata Becomes the Log
-
-**Shared weakness:** Partial-order protocols commit quickly but may execute late or recover painfully because the metadata becomes the effective log.
-
-**Protocols exhibiting it:** [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]].
-
-**Shared paradigm / hidden assumption:** It is cheaper to commit partial order metadata than a total order.
-
-**Assumption type:** Modeling and workload.
-
-**Causal bottleneck:** Because the protocol defers total-order choice to execution, contention creates metadata and scheduling debt.
-
-**Design opportunity:** Make dependencies bounded, typed, compressible, or convertible into local total-order leases.
-
-### Cluster 5: Quorum Size Is Treated As Static
-
-**Shared weakness:** Fast, slow, recovery, and witness quorum sizes are fixed for broad failure assumptions.
-
-**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]].
-
-**Shared paradigm / hidden assumption:** A deployment picks one failure budget and one quorum algebra.
-
-**Assumption type:** Mechanism and operational.
-
-**Causal bottleneck:** Because quorum shapes are static, protocols overpay during healthy periods and underadapt during regional stress.
-
-**Design opportunity:** Use mode-switching quorums with explicit continuity certificates between modes.
-
-### Cluster 6: Communication Overlays Do Not Change Proof Obligations
-
-**Shared weakness:** Relay aggregation reduces load but leaves ordering and quorum proof unchanged.
-
-**Protocols exhibiting it:** [[PigPaxos]], with contrast to leaderless protocols.
-
-**Shared paradigm / hidden assumption:** Transport helpers should not participate in consensus evidence.
-
-**Assumption type:** Mechanism.
-
-**Causal bottleneck:** Because overlays are proof-transparent, they cannot help resolve ambiguity or recovery except by moving bytes.
-
-**Design opportunity:** Let overlays produce auditable evidence summaries without granting them extra votes.
-
-### Cluster 7: Ambiguity Is Either Recovered Or Forfeited
-
-**Shared weakness:** Collisions trigger recovery, validation, slow paths, compatible-history ordering, witness sync, or `bottom` slots.
-
-**Protocols exhibiting it:** [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[Rabia]], [[CURP]].
-
-**Shared paradigm / hidden assumption:** Ambiguity must be resolved at the same granularity as the original slot or command id.
-
-**Assumption type:** Mechanism and proof.
-
-**Causal bottleneck:** Because ambiguity is local to one instance, protocols cannot cheaply preserve useful partial work across nearby commands.
-
-**Design opportunity:** Convert ambiguous slots into reusable ordering credits, dependency hints, or batch certificates.
-
-### Cluster 8: Timing Is Kept Out Of Safety But Still Shapes Performance
-
-**Shared weakness:** Safety is asynchronous, while latency claims depend on synchrony, stable leaders, aligned queues, or available quorums.
-
-**Protocols exhibiting it:** All ingested protocols.
-
-**Shared paradigm / hidden assumption:** Timing should not appear in safety evidence.
-
-**Assumption type:** Operational and proof.
-
-**Causal bottleneck:** Because timing is excluded from safety, protocols cannot safely exploit stable timing except as a performance heuristic.
-
-**Design opportunity:** Add explicitly discardable timing hints that improve fast-path admission but never become safety evidence.
-
-### Cluster 9: Reconfiguration Is Mostly Outside The Core Evidence Model
-
-**Shared weakness:** The current wiki has limited ingested detail on reconfiguration; protocols are mostly described over static membership.
-
-**Protocols exhibiting it:** [[Atlas]], [[Mencius]], [[PigPaxos]], [[Rabia]], [[CURP]], and others as currently summarized.
-
-**Shared paradigm / hidden assumption:** Membership changes are a layer around the protocol rather than part of each commit certificate.
-
-**Assumption type:** Operational and modeling.
-
-**Causal bottleneck:** Because certificates do not encode membership continuity, reconfiguration is hard to compose with fast or leaderless paths.
-
-**Design opportunity:** Make membership epochs and quorum-continuity evidence explicit in every decision object.
-
-### Cluster 10: Proof Burdens Are Protocol-Specific
-
-**Shared weakness:** Each protocol uses a different proof object: values, tuples, dependency visibility, split reconstruction, value-locking, or relay refinement.
-
-**Protocols exhibiting it:** All ingested protocols.
-
-**Shared paradigm / hidden assumption:** Each protocol needs a bespoke invariant.
-
-**Assumption type:** Proof and modeling.
-
-**Causal bottleneck:** Because proof objects are not normalized, design reuse is harder and bugs hide in recovery translations.
-
-**Design opportunity:** Build protocols around reusable evidence algebras: choose, reconstruct, validate, forfeit, refine.
-
-## Protocol Candidates
-
-Legend: `Top candidate` means worth modeling first; `Promising` means researchable but underspecified; `Weak` means likely dominated or high risk; `Reject` means kept only as a negative design note.
-
-| # | Idea | Targeted limitation | Closest related protocols | Paradigm shift and core mechanism | Invariant to preserve | Main risk / proof obligation | Red-team |
-|---:|---|---|---|---|---|---|---|
-| 1 | Recoverable-Fast-Union Paxos | Exact fast matching is brittle. | [[EPaxos]], [[Atlas]] | Replace exact dependency equality with a frequency-threshold union certificate parameterized by the recovery quorum. | Conflicting committed commands are dependency-visible. | Prove every recoverer reconstructs the same union or a safe superset. | Top candidate |
-| 2 | Self-Describing Fast Certificates | Recovery is under-specified at commit time. | [[FastPaxos]], [[GPaxos]], [[EPaxosStar]] | Fast commits include a compact witness describing how later recovery must interpret partial evidence. | One command id commits one payload/dependency object, or one compatible history extension. | Certificate may be as costly as slow-path evidence. | Promising |
-| 3 | Validation-First EPaxos | Validation appears only during recovery. | [[EPaxosStar]], [[EPaxos]] | Add cheap pre-validation summaries during PreAccept so recovery validates fewer omitted conflicts. | Visibility for conflicting committed commands. | Hidden cost in metadata exchange and false negatives. | Promising |
-| 4 | Fast Path With Recovery Budget Tags | One quorum algebra fits all conflicts. | [[EPaxosStar]], [[Atlas]] | Tag each command with an intended recovery budget and choose fast predicate accordingly. | Recovery quorums intersect the chosen fast evidence. | Tags could become unsafe if failure budget changes mid-command. | Promising |
-| 5 | Dependency Checksum Consensus | Dependency equality is expensive to compare and transmit. | [[EPaxos]], [[SwiftPaxos]] | Use authenticated or deterministic dependency-set digests as fast equality evidence, fetch full deps only on mismatch. | Digest collision model must preserve dependency identity. | Requires trusted collision resistance or exact deterministic hashes in model. | Weak |
-| 6 | Two-Tier Fast Evidence | Matching and reconstructible fast evidence are different strengths. | [[EPaxos]], [[Atlas]] | Allow tier 1 exact-match commit and tier 2 recoverable-union commit with different recovery rules. | Later recovery respects the tier used by commit. | Mode confusion could let incompatible evidence pass. | Promising |
-| 7 | Witnessed Collision Fast Paxos | Fast Paxos treats collisions as recovery triggers. | [[FastPaxos]] | Acceptors attach collision-witness sets so a later coordinator can choose without full classic recovery. | Higher rounds choose a value safe for any possible lower choice. | May just repackage Phase 1 evidence. | Weak |
-| 8 | Leader-Including Optional Fast Quorums | Leader inclusion helps recovery but hurts locality. | [[SwiftPaxos]], [[Atlas]] | Fast quorums include either the ballot leader or a recovery delegate elected for the command class. | Delegate participation must substitute for leader intersection. | Delegate election may add a hidden leader. | Promising |
-| 9 | Fast-Quorum Evidence Escrow | Recovery loses original fast-quorum shape. | [[Atlas]], [[FastPaxos]] | Fast quorum members escrow signed summaries to a small durable witness set that recovery queries first. | Escrow cannot create votes, only preserve evidence. | Witness failures and durability assumptions complicate model. | Weak |
-| 10 | Negative-Evidence Fast Commit | Protocols record what was seen, not what was absent. | [[EPaxosStar]], [[Rabia]] | Fast certificate includes bounded negative evidence for known non-conflicts or no-majority observations. | Absence claims cannot hide concurrent conflicting commits. | Hard to prove absence in asynchronous systems. | Reject |
-| 11 | Recovery-Native Paxos | Recovery is a separate cleanup phase. | [[FastPaxos]], [[GPaxos]], [[EPaxosStar]], [[Pando]], [[CURP]] | Define each commit certificate as a recovery program with inputs, quorum type, replay/reconstruction type, and safe-selection rule. | Executing the recovery program preserves any chosen value or replay-safe unordered suffix. | Very abstract; may not yield a faster protocol. | Top candidate |
-| 12 | Nop-With-Reason SMR | `Nop`, `SKIP`, or `bottom` loses useful information if treated as plain emptiness. | [[EPaxosStar]], [[Rabia]], [[Mencius]] | Replace null decisions with typed nulls carrying retry, dependency, ownership, or weak-validity evidence. | Null result cannot decide or hide a conflicting command. | Typed nulls may leak into validity semantics. | Promising |
-| 13 | Recoverable Partial Order Slots | Ambiguity is per command id or slot. | [[EPaxosStar]], [[Rabia]] | Ambiguous recovery commits a partial-order constraint rather than a command or null. | Later commands cannot violate committed constraints. | Constraint accumulation may block progress. | Promising |
-| 14 | Evidence-Carrying Slow Path | Slow path discards why fast path failed. | [[EPaxos]], [[Atlas]] | Slow Accept includes the failed fast evidence so future recovery can avoid revalidation. | Slow quorum acceptance dominates earlier fast ambiguity. | Metadata growth on conflict-heavy workloads. | Promising |
-| 15 | Phase-1b Dependency Reconstruction | Pando-style reconstruction for SMR metadata. | [[Pando]], [[Atlas]], [[GPaxos]] | Store dependency or c-struct metadata in coded fragments; recovery needs enough fragments to reconstruct a safe dep set or compatible history. | Reconstructed metadata object equals the committed identity or extends every lower safe history. | Coded metadata may be larger and complex to update. | Promising |
-| 16 | Recovery Quorum Hints | Recoverers search too broadly. | [[Atlas]], [[EPaxosStar]] | Commit certificates name preferred recovery quorums plus fallback algebra. | Hints cannot be required for safety. | Liveness may degrade if hints are stale. | Weak |
-| 17 | Monotone Recovery Lattice | Recovery case splits are brittle. | [[GPaxos]], [[EPaxosStar]], [[Atlas]], [[Pando]], [[CURP]] | Model recovery values as a join-semilattice: accepted value, compatible extension, reconstructible fast value, replayable suffix, or null. | Join result is unique and safe across quorum evidence. | Need show lattice order matches actual safety, not wishful ranking. | Top candidate |
-| 18 | Waiting-Certificate Recovery | Recovery cycles need explicit breaking. | [[EPaxosStar]] | Generalize `Waiting` into a certificate that transfers blocked recovery obligations to another command. | Waiting cannot mask an already committed conflicting command. | Could create long chains and liveness hazards. | Promising |
-| 19 | Recover-Then-Validate Batching | Per-command validation repeats work. | [[EPaxosStar]], [[Atlas]] | Batch recovery of conflicting commands, validate the induced dependency subgraph once. | Each command id still has a single decision. | Batch graph may include commands that never commit. | Promising |
-| 20 | Minimal-Counterexample Recovery | Recovery proofs are hard to audit. | [[EPaxosStar]], [[FastPaxos]] | Recovery coordinator emits the smallest ambiguity set that justifies fallback or null. | If ambiguity set is empty, recovered value must be unique. | More of a proof/debug artifact than a protocol. | Weak |
-| 21 | Conflict-Class Leaders | Leaderless protocols pay under conflicts. | [[EPaxos]], [[Mencius]], [[SwiftPaxos]] | Elect temporary leaders per conflict class or key range only after contention is detected. | Commands in the class have one serialization authority per epoch. | Class detection races can create split authority. | Top candidate |
-| 22 | Adaptive Authority Leasing | Static slot or command leadership is coarse. | [[Mencius]], [[EPaxos]] | Authority leases migrate between leaderless and class-leader modes based on conflict evidence. | Lease epochs intersect with commit quorums. | Time leases cannot be safety assumptions unless quorum-backed. | Promising |
-| 23 | Hot-Key Mencius | Rotating coordinators cause gaps but balance load. | [[Mencius]], [[EPaxos]] | Allocate hot conflict classes to rotating owners while cold commands remain leaderless. | Owner-only non-null proposal per owned class-slot. | Requires robust hot-key detection. | Promising |
-| 24 | Delegated Dependency Coordinator | Command leader sees too little under contention. | [[EPaxos]], [[SwiftPaxos]] | Fast quorum elects a dependency coordinator for a short conflict window. | Coordinator proposes deps, quorum still commits them. | May collapse into SwiftPaxos-like leader inclusion. | Weak |
-| 25 | Locality-First Command Leaders | Any replica can lead, but not all are good choices. | [[EPaxos]], [[Atlas]] | Choose command leader by predicted conflict locality rather than client proximity alone. | Leader choice affects latency, not safety. | Mostly scheduling, not a protocol contribution. | Weak |
-| 26 | Relay-Backed Multi-Leader Paxos | Relays reduce load but not authority. | [[PigPaxos]], [[Mencius]] | Each slot owner uses relays; relay evidence includes unique voter ids and owner id. | Relay aggregation remains a refinement of owner Paxos. | More engineering than new consensus. | Weak |
-| 27 | Conflict-Escalating Rabia | Rabia forfeits ambiguous slots. | [[Rabia]], [[EPaxos]] | Repeated `bottom` for same request triggers a temporary conflict-class leader instead of endless retry. | Weak-MVC agreement remains valid for each slot. | Escalation path may add recovery proof back in. | Promising |
-| 28 | Leaderless-To-Leaderful Continuity Certificates | Mode switches are risky. | [[EPaxos]], [[SwiftPaxos]] | Switch from leaderless fast path to leaderful repair using a certificate summarizing prior dependency evidence. | Leaderful mode must preserve all visible conflicts. | Certificate may need full dependency graph. | Promising |
-| 29 | Owner-Authored Dependency Skips | Mencius skip idea for dependency gaps. | [[Mencius]], [[EPaxosStar]] | A command owner can issue a signed skip for its missing dependency edge under strict conditions. | Skip cannot remove a necessary conflict edge. | Unsafe unless ownership of conflict observation is defined. | Reject |
-| 30 | Rotating Recovery Coordinators | Stable recovery coordinator can bottleneck. | [[EPaxosStar]], [[Mencius]] | Recovery authority rotates deterministically per command id and round, with quorum-backed takeover. | Higher recovery rounds preserve lower-round possible decisions. | Similar to standard ballots unless conflict-aware. | Weak |
-| 31 | Bounded Dependency SMR | Dependency metadata grows under contention. | [[EPaxos]], [[Atlas]], [[SwiftPaxos]] | Cap dependency sets by replacing older edges with checkpointed conflict summaries. | Summary implies all omitted ordering constraints. | Summary correctness is hard under concurrent commits. | Top candidate |
-| 32 | Dependency Garbage Certificates | Execution waits on old dependency chains. | [[EPaxos-Revisited-2021]], [[Atlas]] | Replicas periodically certify that a dependency frontier can replace explicit ancestors. | Frontier preserves order of all non-commuting committed commands. | Certificate construction may require global coordination. | Promising |
-| 33 | SCC-Aware Fast Commit | Commit and execution readiness diverge. | [[EPaxos]], [[Atlas]], [[EPaxosStar]] | Fast predicate estimates whether new deps create large SCCs and falls back early if so. | Fallback cannot change safety, only metadata shape. | Performance heuristic, not safety improvement. | Weak |
-| 34 | Typed Conflict Dependencies | All conflicts are treated alike. | [[GPaxos]], [[EPaxos]], [[SwiftPaxos]], [[CURP]] | Dependencies carry conflict type such as read-write, write-write, or semantic commutativity class. | Execution order respects non-commuting pairs, while commuting commands may use compatibility or unordered replay. | Application semantics must be trusted and stable. | Promising |
-| 35 | Commutativity-Credit Consensus | Optional out-of-order commit is underused. | [[GPaxos]], [[Mencius]], [[EPaxos]], [[CURP]] | Commands earn credits proving they commute with a certified frontier, reducing required deps or witness-sync pressure. | Credits cannot permit reordered non-commuting commands. | Requires application-provided commutativity oracle. | Promising |
-| 36 | Dependency Bloom Fast Path | Dependency sets are large. | [[EPaxos]], [[Atlas]] | Use conservative Bloom filters for fast conflict visibility; false positives add deps, false negatives forbidden. | No missing conflict edge. | Needs exact no-false-negative construction and fetch path. | Weak |
-| 37 | Path-Compressed Swift Dependencies | Dependency paths are richer than direct deps. | [[SwiftPaxos]] | Commit path certificates that compress repeated dependency prefixes across commands. | Acyclic committed dependency graph. | Compression may hide cycles unless validated. | Promising |
-| 38 | Dependency Debt Scheduler | Protocol commits now, execution pays later. | [[EPaxos-Revisited-2021]], [[Atlas]] | Treat unresolved dependency chains as debt and throttle fast commits that increase predicted debt. | Throttling does not affect safety. | Mainly evaluation policy; novelty limited. | Weak |
-| 39 | Conflict-Window Consensus | Long-lived dependencies are too broad. | [[EPaxos]], [[Atlas]] | Dependencies only reference commands within quorum-certified conflict windows; older conflicts collapse into barriers. | Barriers preserve total order across windows. | Barrier formation could be expensive. | Promising |
-| 40 | Partial-Order To Total-Order Converter | Dependency protocols defer order too long. | [[EPaxos]], [[SwiftPaxos]] | When SCCs exceed a threshold, convert the component into a mini total-order consensus instance. | Component decision must be compatible with existing deps. | Embedded consensus may duplicate work. | Promising |
-| 41 | Quorum Mode Switch Paxos | Static quorum sizes overpay or block. | [[FastPaxos]], [[EPaxosStar]], [[Atlas]] | Maintain several quorum modes and require an explicit intersection certificate when changing modes. | Decisions across modes intersect through a continuity certificate. | Algebra may be complex; liveness during mode changes. | Top candidate |
-| 42 | Healthy-Period Fast Quorums | Worst-case fast quorums are large. | [[EPaxosStar]], [[FastPaxos]] | Use smaller fast quorums only inside a quorum-certified low-failure epoch. | Epoch certificate intersects all recovery quorums. | Must not rely on failure detectors for safety. | Promising |
-| 43 | Regional Outage Atlas | Atlas blocks above configured `f`. | [[Atlas]] | Dynamically reduce geographic spread and switch to a lower-latency partition-safe mode with explicit availability loss. | Safety across unavailable regions through epoch fencing. | May sacrifice liveness for minority regions. | Promising |
-| 44 | Flexible Dependency Quorums | Different commands need different quorum shapes. | [[Atlas]], [[EPaxosStar]] | Choose fast quorum size from conflict/failure class, then record the chosen algebra in the certificate. | Recovery derives intersections from recorded class. | Per-command algebra increases proof surface. | Promising |
-| 45 | Read-Optimized SMR Quorums | Pando optimizes storage reads, SMR less so. | [[Pando]], [[Atlas]] | Add read-only command certificates that use smaller discovery quorums plus write-back when state is ambiguous. | Reads return linearizable state. | Needs integration with command log order. | Promising |
-| 46 | Split Recovery Quorums | Recovery does multiple jobs with one quorum. | [[EPaxosStar]], [[Pando]], [[CURP]] | Use separate quorums for value identity, dependency reconstruction, witness replay, and liveness handoff. | Combined evidence implies one safe value/dependency object or replay-safe suffix. | Intersection matrix may be hard to state. | Promising |
-| 47 | Quorum Algebra Synthesizer Protocol | Quorum formulas are manually derived. | [[quorum-intersection]] | Treat quorum choice as a generated proof artifact consumed by the protocol implementation. | Generated quorums satisfy stated intersections. | Tooling contribution, not protocol unless integrated. | Weak |
-| 48 | Failure-Budget Negotiated Commands | `e` and `f` are global in EPaxos*. | [[EPaxosStar]] | Clients or replicas request fast-path failure budget per command class. | Budget certificate binds quorum sizes for that command. | Users may select unsafe or unavailable budgets. | Promising |
-| 49 | Weighted Fast Recovery | Static sites are not equal in WANs. | [[Atlas]], [[Pando]] | Use weighted quorums where recovery weight corresponds to site reliability or coded split availability. | Weighted intersections reconstruct evidence. | Needs exact weighted quorum theorem. | Promising |
-| 50 | Quorum Continuity Log | Reconfiguration and mode changes need history. | [[Mencius]], [[Atlas]] | Every quorum-mode decision appends a continuity record to a small meta-log. | Data decisions cite a continuity record that intersects prior modes. | Meta-log becomes a leader bottleneck unless sharded. | Promising |
-| 51 | Evidence-Summarizing Relays | Relays are proof-transparent. | [[PigPaxos]], [[EPaxos]] | Relays aggregate not only votes but minimal safe summaries such as dependency frequencies. | Summary expands to unique replica evidence. | Relay equivocation must be detectable. | Promising |
-| 52 | Randomized Relay Recovery | Relay failures cause retries. | [[PigPaxos]] | Recovery coordinators choose random evidence relays to collect Phase 1 faster under partial failures. | Relays do not alter quorum requirements. | Mostly transport-level improvement. | Weak |
-| 53 | Relay-Coded Acceptances | Leader load and evidence size remain high. | [[PigPaxos]], [[Pando]] | Relay groups erasure-code acceptance evidence so the leader reconstructs a majority proof from fragments. | Reconstructed proof identifies unique voters. | Coded vote identity is subtle. | Weak |
-| 54 | Overlay-Aware Fast Quorums | Fast quorum placement ignores communication topology. | [[Atlas]], [[PigPaxos]] | Pick fast quorums through relay groups to minimize WAN load while preserving algebra. | Selected quorum still satisfies protocol intersections. | Optimization, not new safety mechanism. | Weak |
-| 55 | Relay-As-Witness, Not Voter | Need durable summaries without extra votes. | [[PigPaxos]], [[FastPaxos]] | Relays witness message dissemination and can prove equivocation or omission, but never count toward quorum size. | Voter set remains unchanged. | Witness assumptions may require signatures. | Promising |
-| 56 | Hierarchical Dependency Aggregation | Leaderless all-to-all is costly. | [[Rabia]], [[EPaxos]], [[PigPaxos]] | Local relays aggregate dependency observations before global fast decision. | Aggregates represent unique replica observations exactly or conservatively. | Aggregation delay may erase fast-path benefit. | Promising |
-| 57 | Relay-Selected Command Leaders | Choosing leaders by client site can be poor. | [[PigPaxos]], [[EPaxos]] | Relays nominate the replica with best observed reachability as command leader for a window. | Nomination affects performance only unless quorum-certified. | Failure-detector leakage into safety. | Weak |
-| 58 | Proof-Carrying Aggregates | Aggregates are opaque in many models. | [[PigPaxos]] | Every aggregate includes a proof of unique voters and omitted voter status. | Paxos majority remains over unique acceptors. | Certificate overhead may dominate. | Promising |
-| 59 | Relay-Buffered Fast Retries | Failed fast path loses partial work. | [[EPaxos]], [[PigPaxos]] | Relays buffer partial PreAccept/FastAck evidence for immediate retry or recovery. | Buffered evidence cannot outlive its ballot/epoch unsafely. | Stale buffers could confuse recovery. | Promising |
-| 60 | Topology-Adaptive Mencius Relays | Rotating owners face WAN asymmetry. | [[Mencius]], [[PigPaxos]] | Owners use topology-aware relay trees while preserving owner-only non-null values. | Relay layer refines the same simple consensus instance. | Engineering dominated unless proof of tail reduction is clear. | Weak |
-| 61 | Ambiguity Credit Slots | `bottom`, `Nop`, and forced witness sync waste partial evidence. | [[Rabia]], [[EPaxosStar]], [[CURP]] | Null or slow-sync outcomes produce credits that prioritize or constrain retried commands. | Credits cannot force an unsafe later decision. | Credit semantics may become hidden state. | Promising |
-| 62 | Batch Forfeit Consensus | Ambiguous individual slots could be handled together. | [[Rabia]] | Decide `bottom` for a batch only when no majority-supported ordering exists, then reshuffle batch requests. | Agreement on each slot or batch position. | Larger forfeits hurt latency under mild contention. | Weak |
-| 63 | Constraint-Carrying Bottom | Null slots can preserve conflict information. | [[Rabia]], [[EPaxos]] | A `bottom` decision carries a set of observed conflicting candidates as future scheduling constraints. | Constraints cannot imply a decided command. | Validity and log compaction become complex. | Promising |
-| 64 | Probabilistic Dependency Recovery | Randomization avoids failover in Rabia. | [[Rabia]], [[EPaxosStar]] | Use common coin to break recovery cycles among conflicting dependency recoveries. | Random choice must select only validated safe candidates. | Randomness cannot repair unsafe candidate sets. | Promising |
-| 65 | Weak-Validity Fast Paxos | Collision recovery may be expensive. | [[FastPaxos]], [[Rabia]] | Fast Paxos instances may decide a typed null on collision and retry values in later slots. | Agreement allows null but preserves proposed-value validity for concrete slots. | Changes consensus validity; may be unacceptable. | Weak |
-| 66 | Retry-Stable Request Identity | Retried requests appear across protocols. | [[Rabia]], [[EPaxosStar]] | Make request identity and retry lineage first-class so null/Nop recovery cannot duplicate effects. | At-most-once execution for client request ids. | Mostly SMR integration rather than consensus core. | Promising |
-| 67 | Ambiguity-Aware Client Routing | Proposal alignment matters. | [[Rabia]], [[EPaxos-Revisited-2021]] | Route clients to reduce simultaneous conflicting proposal heads, with protocol-visible but non-safety hints. | Routing hints never decide values. | Scheduling heuristic, not robust protocol idea. | Weak |
-| 68 | Null Density Controller | Rabia log density varies. | [[Rabia]] | Dynamically switch between randomized weak slots and leaderful slots when `bottom` density rises. | Mode switch preserves slot agreement and request uniqueness. | Adds leader machinery Rabia avoids. | Promising |
-| 69 | Recoverable Forfeit Certificates | Nop decisions need explanation. | [[EPaxosStar]], [[Rabia]] | Null/Nop decisions include the evidence that made concrete recovery unsafe. | Later audit agrees null was safe. | Certificate may be large. | Promising |
-| 70 | Partial Progress Slots | Slot output need not be command or null. | [[Rabia]], [[EPaxos]] | Slot can decide a small ordering fact, such as "A before B", when command choice is ambiguous. | Ordering facts are acyclic and respected by later slots. | Validity semantics become nonstandard. | Promising |
-| 71 | Timing-Hinted Fast Admission | Timing affects performance but not safety. | [[EPaxosStar]], [[Rabia]] | Use delay-bound hints to decide whether to attempt fast path, while safety evidence remains quorum-only. | Timers never justify commit. | Performance-only unless strongly evaluated. | Weak |
-| 72 | Discardable Clock Dependencies | Clocks can mitigate conflict timing but are risky. | [[EPaxos-Revisited-2021]], [[EPaxosStar]] | Attach clock order as a discardable dependency hint; quorum evidence must validate or ignore it. | Unsafe clock order cannot remove real conflict deps. | Clock hints may be mistaken for safety evidence. | Promising |
-| 73 | Stabilization-Epoch Fast Path | Fast path works after network stabilizes. | [[FastPaxos]], [[Rabia]], [[SwiftPaxos]] | Quorum-certify a stabilization epoch that enables cheaper fast admission but not smaller safety intersections. | Epoch affects only performance predicates. | May be too weak to matter. | Weak |
-| 74 | Latency-Class Quorums | WAN links have diverse delays. | [[Atlas]], [[Pando]] | Commands choose quorum sets by latency class and record class in certificate. | Class-specific quorums satisfy intersection formulas. | Could starve high-latency sites. | Promising |
-| 75 | Timeout-Free Slow Trigger | Timeout heuristics cause unnecessary recovery. | [[PigPaxos]], [[EPaxos]] | Trigger fallback based on explicit negative or mismatch evidence instead of elapsed time when possible. | Absence of timeout evidence cannot block forever. | Need liveness escape hatch. | Promising |
-| 76 | Synchronous-Window EPaxos | EPaxos* has explicit fast-run timing theorem. | [[EPaxosStar]] | Detect windows where the `e`-fast assumptions likely hold and batch conflict-free fast attempts there. | Detection is performance-only; safety remains asynchronous. | Mostly batching policy. | Weak |
-| 77 | Timing-Annotated Proof Obligations | Models often mix latency and safety. | [[timing-assumptions]], [[proof-techniques]] | Protocol messages carry annotations classifying evidence as safety, liveness, or performance. | Only safety evidence enters commit predicates. | Tooling/meta-protocol, not direct SMR design. | Weak |
-| 78 | Delay-Adaptive Recovery Priority | Recovery order affects tail latency. | [[EPaxosStar]], [[Atlas]] | Prioritize recovery of commands whose dependencies block many ready commands, using measured delays as hints. | Priority does not change selected safe value. | Scheduling only, but useful for evaluation. | Weak |
-| 79 | Stable-Leader Escape Hatch | Leaderless tails can be bad under contention. | [[EPaxos-Revisited-2021]], [[SwiftPaxos]] | Temporarily install a leader after quorum-certified conflict/tail evidence crosses threshold. | Leader epoch intersects unresolved leaderless evidence. | Complex continuity proof. | Promising |
-| 80 | Queue-Alignment Rabia | Rabia fast path likes aligned PQ heads. | [[Rabia]] | Replicas exchange cheap queue-head hints before consensus instances to improve proposal alignment. | Hints cannot suppress valid client requests indefinitely. | Mostly performance tuning. | Weak |
-| 81 | Epoch-Carrying Fast Certificates | Static membership is assumed. | [[Atlas]], [[EPaxosStar]], [[SwiftPaxos]] | Every fast certificate includes membership epoch and quorum-continuity proof reference. | Certificates from adjacent epochs intersect safely. | Needs reconfiguration theory not yet ingested. | Promising |
-| 82 | Reconfigurable Dependency Frontiers | Dependency graphs cross membership changes. | [[EPaxos]], [[Atlas]] | Reconfiguration commits a dependency frontier that new epoch must preserve before executing later commands. | Frontier orders all prior conflicting committed commands. | Frontier may be large. | Promising |
-| 83 | Membership-Aware Recovery Quorums | Recovery quorum `n - f` changes with epoch. | [[EPaxosStar]], [[Atlas]] | Recoverer collects evidence from old and new epoch quorums according to a recorded transition algebra. | Possible old decisions remain recoverable. | Intersection conditions may be onerous. | Promising |
-| 84 | Relay-Assisted Reconfiguration | Changing relay groups is separate from membership. | [[PigPaxos]] | Relays help disseminate and audit membership changes while votes remain replica-based. | Relay proof is transport refinement only. | Does not solve core quorum continuity. | Weak |
-| 85 | Randomized Reconfiguration Slots | Rabia claims simpler reconfiguration direction. | [[Rabia]] | Use Weak-MVC slots to decide membership changes, allowing `bottom` for ambiguous changes. | Membership change slots are totally ordered with commands. | Weak validity for config changes may reduce availability. | Promising |
-| 86 | Coded State Transfer Certificates | Reconfiguration needs state transfer. | [[Pando]], [[Rabia]] | New members reconstruct state from erasure-coded certified checkpoints tied to log certificates. | Checkpoint identity matches decided log prefix. | Storage protocol and SMR proof must compose. | Promising |
-| 87 | Failure-Domain Epochs | Failure budgets are deployment-specific. | [[Atlas]], [[Pando]] | Epochs encode failure domains and quorum constraints, not only member sets. | Quorum intersections respect domain weights. | Operational complexity. | Promising |
-| 88 | Rolling Fast-Quorum Replacement | Fast quorums are static within a command. | [[FastPaxos]], [[SwiftPaxos]] | Replace fast-quorum members gradually with overlap certificates instead of stopping fast path. | Replacement preserves fast-fast and fast-recovery intersections. | High proof complexity. | Weak |
-| 89 | Reconfiguration As Dependency | Membership changes conflict with all commands. | [[EPaxos]], [[Mencius]] | Treat config changes as commands with universal conflict dependencies and special execution barriers. | No command executes across config boundary without barrier. | Conservative, may be known and slow. | Weak |
-| 90 | Configuration-Leased Conflict Classes | Shard authority and membership together. | [[Mencius]], [[EPaxos]] | Each conflict class has a config epoch and leader/leaderless mode, changed by quorum certificate. | Class epochs compose into one serializable SMR history. | Cross-class transactions are hard. | Promising |
-| 91 | Evidence Algebra SMR | Proof objects are bespoke. | [[proof-techniques]] | Build SMR protocol around reusable evidence operations: choose, validate, reconstruct, extend, replay, forfeit, refine. | Algebra laws imply agreement, recoverability, compatibility, and deterministic execution. | Too abstract unless instantiated. | Top candidate |
-| 92 | Adopt-Commit Dependency Layer | Fast evidence resembles adopt-commit. | [[adopt-commit-abstraction]], [[EPaxosStar]] | Express dependency fast path as adopt-commit: commit if unambiguous, adopt if recoverable. | Adopted value must be safe for later commit. | Need exact abstraction page expansion. | Promising |
-| 93 | Refinement-First PigPaxos | Transport and consensus proof separation is useful. | [[PigPaxos]], [[proof-techniques]] | Design overlays by first proving refinement to an abstract vote-collector automaton. | Abstract majority proof unchanged. | Methodology more than protocol. | Weak |
-| 94 | Unified Null Semantics | `Nop`, `SKIP`, and `bottom` differ. | [[Mencius]], [[EPaxosStar]], [[Rabia]] | Define typed empty outcomes with explicit validity, ownership, retry, and weak-validity semantics. | Empty outcomes cannot hide conflicting concrete decisions. | May blur protocol-specific assumptions. | Promising |
-| 95 | Dependency Visibility Logic | Visibility proofs recur. | [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]] | Make cross-command visibility a first-class logic independent of per-instance agreement. | Agreement plus visibility implies deterministic execution. | Logic must cover SCCs, paths, and unions. | Top candidate |
-| 96 | Recovery Counterexample Generator | Bugs hide in recovery. | [[EPaxosStar]], [[rocq-modeling-notes]] | Protocol design includes a small model that searches for ambiguous recovery evidence before proof. | No accepted candidate lacks a recovery search pass. | Tooling, not a protocol mechanism. | Promising |
-| 97 | Certificate Normal Form | Certificates differ across protocols. | [[FastPaxos]], [[GPaxos]], [[Pando]], [[Rabia]], [[CURP]] | Normalize evidence into fields: electorate, epoch, object identity, payload, compatibility/reconstruction/replay rule, fallback. | Normal form preserves original protocol safety semantics. | Could oversimplify distinct mechanisms. | Promising |
-| 98 | Proof-Carrying Quorum Changes | Quorum formulas are easy to miscopy. | [[quorum-intersection]] | Quorum changes carry machine-checkable intersection lemmas with the certificate. | Runtime accepts only certificates whose lemmas match policy. | Runtime proof checking may be heavy. | Weak |
-| 99 | Visibility-Preserving Compression | Formal models struggle with metadata growth. | [[EPaxos-Revisited-2021]], [[Atlas]] | Compress dependency histories only via transformations proven to preserve visibility. | Compression is a simulation relation on executions. | Finding useful transformations may be hard. | Promising |
-| 100 | Protocol Kernel With Pluggable Evidence | Ideas combine dimensions unsafely. | All ingested protocols | Define a small SMR kernel parameterized by evidence type, quorum algebra, recovery rule, and execution relation. | Kernel theorem: valid plugin implies agreement, validity, recoverability, and deterministic execution. | Very ambitious; plugin obligations may be as hard as full proofs. | Top candidate |
-
-## Candidate Ranking
-
-| Idea | Novelty | Structural fit | Proof tractability | Evaluation clarity | Risk | Overall |
-|---|---:|---:|---:|---:|---:|---:|
-| Recoverable-Fast-Union Paxos | 4 | 5 | 3 | 5 | 3 | 5 |
-| Recovery-Native Paxos | 5 | 5 | 3 | 3 | 4 | 4 |
-| Monotone Recovery Lattice | 5 | 5 | 4 | 3 | 3 | 5 |
-| Conflict-Class Leaders | 4 | 5 | 3 | 5 | 3 | 5 |
-| Bounded Dependency SMR | 4 | 5 | 3 | 5 | 4 | 4 |
-| Quorum Mode Switch Paxos | 5 | 4 | 3 | 4 | 4 | 4 |
-| Evidence Algebra SMR | 5 | 5 | 3 | 3 | 4 | 5 |
-| Dependency Visibility Logic | 4 | 5 | 4 | 4 | 3 | 5 |
-| Protocol Kernel With Pluggable Evidence | 5 | 5 | 2 | 3 | 5 | 4 |
-| Nop-With-Reason SMR | 4 | 4 | 4 | 4 | 3 | 4 |
-| Read-Optimized SMR Quorums | 4 | 4 | 3 | 5 | 4 | 4 |
-| Conflict-Escalating Rabia | 4 | 4 | 3 | 4 | 4 | 4 |
-| Epoch-Carrying Fast Certificates | 4 | 4 | 3 | 3 | 4 | 4 |
-| Unified Null Semantics | 3 | 5 | 4 | 3 | 3 | 4 |
-
-## Most Researchable Next Steps
-
-### Recoverable-Fast-Union Paxos
-
-**Next step:** Write the exact quorum inequality that makes a dependency union reconstructible from every recovery quorum, starting from the [[Atlas]] proof shape.
-
-**Counterexample to search for:** Two conflicting commands whose unions each satisfy local frequency thresholds but neither dependency edge is reconstructible after `f` failures.
-
-**Artifact:** Small TLA+/Rocq model with command ids, dependency reports, fast quorums, and recovery quorums.
-
-### Monotone Recovery Lattice
-
-**Next step:** Define a lattice with elements for accepted slow proposal, reconstructible fast proposal, validated fast proposal, and null.
-
-**Counterexample to search for:** A recovery quorum where two incomparable fast proposals both appear recoverable.
-
-**Artifact:** Paper note proving that the join operation is deterministic and safe under the stated quorum intersections.
-
-### Conflict-Class Leaders
-
-**Next step:** Formalize conflict-class epochs and the certificate that moves a key/class from leaderless mode to class-leader mode.
-
-**Counterexample to search for:** Two replicas classify the same pair of conflicting commands into different classes and commit without a dependency edge.
-
-**Artifact:** Simulator extension using EPaxos-like workloads to compare tail execution latency against class-leader escalation.
-
-### Bounded Dependency SMR
-
-**Next step:** Define a frontier certificate that can replace explicit dependencies without losing visibility.
-
-**Counterexample to search for:** A compressed frontier that hides a non-commuting command needed for deterministic execution.
-
-**Artifact:** Graph model over committed dependency DAGs/SCCs with compression simulation lemma.
-
-### Quorum Mode Switch Paxos
-
-**Next step:** Specify two modes, such as normal fast mode and regional-outage mode, plus a continuity certificate between their quorums.
-
-**Counterexample to search for:** A value chosen in old mode and an incompatible value chosen in new mode with disjoint effective evidence.
-
-**Artifact:** Algebra table in [[quorum-intersection]] style for mode-specific fast, slow, and recovery quorums.
-
-### Evidence Algebra SMR
-
-**Next step:** Define abstract evidence operations `choose`, `reconstruct`, `validate`, `forfeit`, and `refine`.
-
-**Counterexample to search for:** An algebra instance that satisfies local operation laws but violates cross-command visibility.
-
-**Artifact:** Reusable proof skeleton connecting per-instance agreement to dependency visibility and deterministic execution.
-
-### Dependency Visibility Logic
-
-**Next step:** Separate per-command agreement from cross-command visibility and prove the latter for EPaxos*, Atlas, and SwiftPaxos-like mechanisms.
-
-**Counterexample to search for:** Two commands each individually agreed but with no recoverable dependency direction.
-
-**Artifact:** A comparison proof note that normalizes visibility obligations across dependency protocols.
-
-### Protocol Kernel With Pluggable Evidence
-
-**Next step:** Draft the kernel theorem and list plugin obligations for quorum algebra, recovery rule, and execution relation.
-
-**Counterexample to search for:** A plugin that proves per-slot agreement but fails SMR linearizability due to dependency execution ambiguity.
-
-**Artifact:** Minimal abstract SMR kernel page or Rocq module.
-
-## Rejected Or Weak Directions To Keep As Warnings
-
-- Negative evidence is attractive but unsafe unless absence claims are quorum-backed.
-- Clock and timing hints should be discardable; they must not become safety evidence.
-- Relay aggregation is useful, but granting relays implicit voting power breaks the clean [[PigPaxos]] refinement story.
-- Null outcomes need validity semantics; treating `Nop`, `SKIP`, and `bottom` as identical would erase important protocol-specific assumptions.
-- Per-command quorum customization is promising only if the certificate records the exact quorum algebra used.
-
-## Related Pages
-
-[[protocol-catalog]], [[quorum-systems]], [[fast-paths]], [[recovery-rules]], [[commit-rules]], [[conflict-handling]], [[leader-roles]], [[proof-techniques]], [[quorum-intersection]], [[adopt-commit-abstraction]], [[unresolved-confusions]]
+| Defect cluster | Wiki evidence | Causal bottleneck | Design dimension to perturb |
+|---|---|---|---|
+| Exact fast evidence is brittle | [[FastPaxos]] wants same value; [[EPaxos]] wants matching attributes; [[SwiftPaxos]] wants matching dependency-path evidence; [[Atlas]] relaxes matching through a recoverable union predicate | Because fast commit treats disagreement as unsafe, harmless observation differences trigger fallback under concurrency | Fast-path predicate, metadata, recovery evidence |
+| Recovery is the real protocol | [[EPaxosStar]] centers validation; [[Atlas]] reconstructs remembered fast quorums; [[GPaxos]] uses `ProvedSafe`; [[FastPaxos]] needs safe higher-round value selection | Because early evidence may be partial, later leaders need a proof object that distinguishes committed from merely possible outcomes | Recovery rule, proof obligation, certificate shape |
+| Commit can outrun execution | [[EPaxos-Revisited-2021]], [[Atlas]], and [[SwiftPaxos]] separate command commit from dependency execution readiness | Because dependency graphs can grow or form SCCs, low commit latency may hide tail execution latency | Dependency handling, pruning, execution certificate |
+| Leaderless designs move cost into metadata | [[EPaxos]], [[EPaxosStar]], [[Atlas]], and [[Rabia]] avoid a stable leader but pay in dependency, validation, or randomized agreement machinery | Because no single sequencer observes all conflicts, replicas must encode conflict visibility in messages | Leader role, conflict-class ownership, metadata |
+| Strong leaders bottleneck but simplify recovery | [[PigPaxos]] keeps Paxos safety and optimizes communication; [[CURP]] keeps a master and uses witnesses; [[SwiftPaxos]] includes the ballot leader in fast quorums | Because central ordering simplifies safe recovery, removing the leader often recreates a hidden anchor elsewhere | Leader placement, relay layer, witness layer |
+| All-witness or all-fast paths are fragile | [[CURP]] primary-backup fast path needs all `f` witnesses; [[EPaxosStar]] fast quorum `n - e` can be large; [[Atlas]] tunes around small `f` | Because fast recovery wants complete or reconstructible evidence, availability budgets drive quorum size | Quorum shape, witness selection, flexible budgets |
+| Randomized fallback trades density for simplicity | [[Rabia]] can decide `bottom` slots and retry requests | Because ambiguous proposal alignment is resolved by forfeiting a slot, the protocol avoids separate leader recovery at the cost of sparse logs | Commit rule, validity, retry policy |
+| Transport overlays do not change safety by themselves | [[PigPaxos]] relays aggregate unique votes but do not alter quorums | Because communication optimization preserves the old proof, it cannot fix leader placement or fast-path conflict defects alone | Overlay, aggregation, proof refinement |
+| Erasure-coded recovery separates identity from fragments | [[Pando]] distinguishes value identity, coded split availability, and Phase 1a/1b/2 quorums | Because cheap discovery is weaker than full recovery, read/write paths need different evidence shapes | Storage evidence, read path, split quorum |
+| Missing families are negative space | [[bft-consensus]] and [[dag-based-consensus]] are intentionally unpopulated | Because no sourced BFT or DAG protocol is ingested, ideas in those directions need future sources before being promoted | Fault model, DAG ordering, source coverage |
+
+## Defect Clusters
+
+### A. Fast Evidence That Is Recoverable But Not Identical
+
+Because protocols often require identical early evidence, they fall back under benign timing skew or concurrent non-conflicting observations.
+
+1. **Recoverable-Union EPaxos** - Idea: replace exact EPaxos fast-path dependency matching with an [[Atlas]]-style predicate saying every dependency in the final union appears in enough fast replies to be reconstructed. Proof hook: derive the recovery quorum intersection and then add [[EPaxosStar]]-style visibility validation.
+2. **Threshold-Path SwiftPaxos** - Idea: let [[SwiftPaxos]] fast-commit when each dependency path segment is reported by a threshold of leader-including fast-quorum members, not only when all paths match exactly. Risk: acyclicity may fail unless path thresholds compose.
+3. **Witnessed Fast Paxos Collisions** - Idea: add lightweight conflict witnesses to [[FastPaxos]] fast rounds so recovery can distinguish one dominant fast value from a symmetric collision. Proof hook: define a pickable predicate that uses witness counts without weakening triple intersection.
+4. **C-Struct Union Fast SMR** - Idea: use [[GPaxos]] c-struct compatibility as the fast evidence for SMR commands, but attach an explicit recovery certificate for the lub learned by clients. Risk: checkpointing and garbage collection may be harder than dependency sets.
+5. **Frequency-Capped Dependency Union** - Idea: cap dependency unions to dependencies that appear in at least `k` replies and send rare dependencies through slow validation. Evaluation hook: measure whether this reduces dependency-chain tails from [[EPaxos-Revisited-2021]].
+6. **Recoverable Non-Matching FastAck** - Idea: extend [[SwiftPaxos]] `FastAck` so non-matching follower proposals are acceptable when they can be deterministically repaired to the leader proposal from quorum evidence. Proof hook: show no repaired value can hide a previously fast-committed different dependency path.
+7. **Two-Level Fast Evidence** - Idea: commit on a small exact core plus a recoverable optional dependency fringe. The core gives agreement; the fringe only affects execution order after validation.
+8. **Dependency Bloom Certificate** - Hypothesis: use compact probabilistic summaries only as a prefilter for dependency disagreement, with exact evidence required before commit. Risk: false positives may hurt liveness; false negatives must be impossible or excluded by construction.
+9. **Quorum-Remembered Fast Sets** - Idea: require command coordinators to publish the identity of their fast quorum early, as in [[Atlas]], so later recovery knows which intersection to reconstruct from. Cost: larger metadata and possible quorum-selection gaming.
+10. **Fast Evidence Normalizer** - Idea: define a deterministic normalization function over dependency replies before checking equality. Proof hook: prove normalization preserves all conflicts that visibility requires.
+
+### B. Recovery-First Protocol Shapes
+
+Because ambiguous recovery is a recurring failure mode, design the recovery predicate first and derive the fast path from it.
+
+11. **Recovery-First EPaxos Variant** - Idea: start from [[EPaxosStar]] validation and allow only fast commits whose evidence would pass validation if replayed later. This makes fast path an optimization of recovery, not a separate proof case.
+12. **Safe-Value DSL Paxos** - Idea: specify Fast Paxos, [[GPaxos]], and dependency SMR recovery through a small language of safe-value predicates. Proof hook: reuse [[adopt-commit-abstraction]] while keeping protocol-specific metadata explicit.
+13. **Validation Cache SMR** - Idea: replicas cache negative validation facts, such as "no known conflicting command can have committed without edge X", to accelerate future recoveries. Risk: cache invalidation across ballots.
+14. **Recovery Witness Quorum** - Idea: add a small class of non-voting recovery witnesses that store fast-path metadata but do not participate in normal commit. Similar caution as [[CURP]] witnesses: recovery must select evidence consistently.
+15. **NoOp-First Recovery** - Idea: recover uncertain command identifiers as `noOp` aggressively, as in [[EPaxosStar]], while requiring clients to resubmit payloads with stable request ids. Evaluation hook: compare extra resubmissions against simpler proof obligations.
+16. **Recoverable Ballot Anchors** - Idea: add a per-conflict-class ballot anchor only for recovery, not normal fast commit. Risk: if the anchor is too central, it becomes a hidden leader.
+17. **Evidence Lattice Recovery** - Idea: represent recovery evidence as a lattice: accepted proposal > validated fast proposal > reconstructible no-op. Proof hook: prove monotonic selection prevents incompatible lower evidence.
+18. **Anti-Ambiguity Prepare** - Idea: add a prepare subphase that asks replicas to report not only accepted state but also "commands I would need validated before accepting this recovery". Cost: more recovery messages, likely acceptable if rare.
+19. **Self-Describing Fast Certificates** - Idea: each fast certificate includes enough quorum geometry to recompute its own recovery intersections. Useful for flexible quorums and dynamic relay groups.
+20. **Recovery Counterexample Harness** - Idea: treat the protocol as a candidate only if a small model checker cannot produce two recoveries that select incompatible dependencies from intersecting evidence. This is a research workflow candidate, not a protocol mechanism.
+
+### C. Commit-Execution Gap Reduction
+
+Because dependency protocols can commit quickly but execute late, target execution readiness directly.
+
+21. **Execution-Ready Fast Commit** - Idea: fast commit only when the dependency set is both agreed and already committed or jointly certifiable as an SCC. Evaluation hook: compare median commit loss against tail execution gain.
+22. **Bounded-Depth Dependency SMR** - Idea: allow fast commit only if the transitive dependency depth stays below a configured bound; otherwise fall back to a leader/anchor that linearizes. Risk: liveness under hot-key workloads.
+23. **Prunable Dependency Certificates** - Idea: attach a proof that dependencies older than a frontier cannot affect execution order, inspired by the pruning concerns in [[EPaxos-Revisited-2021]]. Proof hook: formalize the frontier invariant.
+24. **SCC-First Commit Rule** - Idea: commit batches of mutually dependent commands as the consensus object rather than committing commands separately and discovering SCCs later. Cost: larger consensus values under conflict.
+25. **Dependency Lease Horizon** - Hypothesis: use timing only for liveness/performance, never safety, to bias dependency collection toward a short horizon in stable periods. Caveat: any lease claim must be outside the safety proof, per [[timing-assumptions]].
+26. **Conflict-Class Serializers** - Idea: route commands that touch the same hot conflict class through a temporary serializer while keeping cold commands leaderless. This targets EPaxos tail latency without globally reintroducing a leader.
+27. **Execution-Aware Fast Quorum** - Idea: choose fast quorum members based on who already knows the likely dependencies, not merely geography. Risk: quorum adaptivity complicates intersection proofs.
+28. **Dependency Debt Accounting** - Idea: expose a per-command "execution debt" metric and force slow path once debt exceeds a threshold. This is an adaptive performance mechanism with unchanged safety.
+29. **Frontier-Stamped Dependencies** - Idea: every dependency proposal includes a local committed frontier; recovery prefers proposals whose frontiers make execution closer. Proof hook: frontier cannot be used to drop required conflicts.
+30. **Hot-Key Bottom Slots** - Idea: combine [[Rabia]] slot forfeiture with dependency SMR: under unresolved hot-key contention, decide a `bottom` placeholder and retry, instead of committing long dependency chains.
+
+### D. Leader Role and Anchor Placement
+
+Because leaders simplify recovery but bottleneck throughput, use narrower or movable anchors.
+
+31. **Per-Key Swift Anchors** - Idea: replace one [[SwiftPaxos]] ballot leader with per-key-range leaders that must be included only in fast quorums for their conflict class. Risk: multi-key commands need multiple anchors or a deterministic tie-break.
+32. **Rotating Dependency Anchors** - Idea: use [[Mencius]]-style rotation for dependency anchors rather than log slots. Each command's conflict class determines the anchor for validation and slow repair.
+33. **Leaderless Fast, Leadered Repair** - Idea: keep [[Atlas]] or [[EPaxos]] fast path fully leaderless, but require all fallback repair to use a stable leader-including quorum. Proof hook: show leadered repair preserves possible fast decisions.
+34. **Client-Chosen Anchor With Proof** - Idea: clients select a nearby anchor and include its signed or durable proposal evidence. In crash-only models, the "signature" can be a stored message record; Byzantine assumptions are not inferred.
+35. **Relay-Elected Temporary Leader** - Idea: piggyback a temporary slow-path leader election on [[PigPaxos]] relay groups when the stable leader is overloaded. Risk: this changes consensus semantics and needs a real Paxos election proof.
+36. **Anchorless Read-Only Fast Path** - Idea: borrow [[SwiftPaxos]] distributed read-only execution but allow read-only commands to use any fast-quorum replica when the dependency certificate is leader-independent. Proof hook: linearizability for reads.
+37. **Mencius With Dependency Escape Hatch** - Idea: keep owner-assigned slots, but let non-owners attach dependency certificates for commutable out-of-order execution rather than waiting for gaps. Risk: owner `SKIP` and dependency evidence must remain separate.
+38. **Failure-Responsive Anchors** - Idea: shrink or move anchors when the current anchor is suspected, while retaining old-anchor evidence in recovery certificates. Liveness hook: eventual stable anchor per conflict class.
+39. **Conflict-Class Omega** - Idea: replace per-command recovery leader detectors with per-conflict-class detectors, reducing recovery churn for hot classes. Risk: cold commands should not wait behind hot-class recovery.
+40. **Bottleneck-Aware Ballot Layout** - Idea: assign ballot leadership by measured load and conflict graph, not by replica id. Proof hook: ballot ownership is performance metadata; safe voting rules must remain ballot-based.
+
+### E. Quorum Geometry and Flexible Budgets
+
+Because quorum size determines both latency and recoverability, vary fast, slow, and recovery budgets independently.
+
+41. **Adaptive `e`-Fast SMR** - Idea: expose [[EPaxosStar]]'s `e` as an operational knob that changes fast quorum size by epoch. Proof hook: epoch certificates must prevent mixing incompatible `e` values.
+42. **Atlas Failure-Budget Scheduler** - Idea: adjust [[Atlas]] `f` per epoch based on expected concurrent site outages. Risk: safety must be parameterized by the strongest recovery obligation across epochs.
+43. **Flexible Dependency Paxos** - Idea: combine small slow quorums with large recovery quorums for dependency SMR, deriving formulas before implementation as [[quorum-systems]] recommends. Proof hook: intersection algebra table first.
+44. **Region-Weighted Fast Quorums** - Idea: choose fast quorums with regional weights so nearby sites can form low-latency evidence while preserving recovery intersection. Risk: weighted quorum proofs are easy to get subtly wrong.
+45. **Dual Fast Quorum Classes** - Idea: offer a small fast quorum for read-only or commutative commands and a larger fast quorum for arbitrary updates. Recovery must know which class was used.
+46. **Leader-Including Small Fast Quorum** - Idea: explore [[SwiftPaxos]] C2-style fixed majority fast quorums for a subset of commands whose leader is co-located with hot clients. Risk: fixed quorum hurts availability and load balance.
+47. **Fast-Quorum Market** - Hypothesis: let replicas advertise latency and load, and pick quorums satisfying a certified intersection policy. Protocol value: separates optimization from safety predicate.
+48. **Slow-Path-First Flexible Design** - Idea: choose the smallest safe slow quorum first, then derive the fast predicate that remains recoverable from `n - f`. This reverses the usual "make fast path pretty" approach.
+49. **Read-Discovery vs Recovery Split for SMR** - Idea: adapt [[Pando]]'s distinction between Phase 1a discovery and Phase 1b recovery to SMR reads: cheap read discovery can observe candidates, but only stronger evidence can finalize.
+50. **Quorum-Versioned Certificates** - Idea: every commit certificate carries the quorum-system version used to form it. Necessary if adaptive or flexible quorum policies are allowed.
+
+### F. Witness and Unordered Durability Ideas
+
+Because [[CURP]] shows unordered durability can buy 1 RTT but is availability-sensitive, generalize witnesses carefully.
+
+51. **Majority Witness CURP** - Idea: replace all-witness fast durability with a witness quorum plus stronger recovery selection. Proof hook: show any completed unsynced operation appears in the selected recovery witness set, not just one witness.
+52. **Dependency Witnesses** - Idea: witnesses store unordered dependency observations rather than full requests. Recovery uses them to validate conflict visibility for [[EPaxosStar]]-style recovery.
+53. **Witnessed Atlas Fast Quorum** - Idea: add cheap witnesses that remember the initial fast quorum and dependency union, reducing recovery dependence on failed coordinators. Risk: witnesses become part of the recovery fault model.
+54. **Commutativity Witness for Paxos Leaders** - Idea: a strong leader can reply before majority accept only when witnesses certify the unsynced suffix is mutually commutative, as in [[CURP]]. Proof hook: integrate with Paxos leader change.
+55. **Witness Garbage-Collection Frontier** - Idea: witnesses keep records until a quorum-certified execution frontier passes them. This targets CURP's reconfiguration and zombie-client TODOs.
+56. **Selected-Witness SMR Recovery** - Idea: recover from one selected witness per conflict class instead of merging witness records. This borrows CURP's "do not union witnesses" warning.
+57. **Witnessed Bottom Avoidance** - Idea: in [[Rabia]]-like protocols, witnesses store proposal alignment hints to reduce `bottom` slots without changing binary agreement safety.
+58. **Witness-Backed Read-Only Reply** - Idea: read-only commands execute speculatively at nearby replicas and use witnesses to prove no unsynced conflicting update is hidden. Risk: read linearizability proof may dominate the design.
+59. **Elastic Witness Placement** - Idea: move witnesses to low-latency failure domains while keeping the master/backup quorum fixed. Open question: co-hosted vs separate crash domains from [[CURP]].
+60. **Witness Capacity Slowdown** - Idea: treat witness rejection due to capacity or non-commutativity as an explicit signal to switch a conflict class into slow ordered mode.
+
+### G. Randomization and Slot Forfeiture
+
+Because [[Rabia]] avoids leader recovery by allowing weak validity, explore bounded uses of randomness in Paxos-like SMR.
+
+61. **Randomized Dependency Repair** - Idea: when dependency recovery has multiple safe candidates, use a common coin to select one rather than waiting for a leader preference. Proof hook: all candidates must already be safe.
+62. **Selective Bottom for Hot Conflicts** - Idea: only commands in high-contention classes may produce `bottom` slots; cold commands use deterministic fast paths. Evaluation hook: log density under skew.
+63. **Coin-Driven Anchor Rotation** - Idea: use common coin outcomes to rotate slow-path anchors after repeated conflict or timeout. Safety remains ordinary quorum safety; randomness is only liveness/load balancing.
+64. **Weak-MVC Per Conflict Class** - Idea: run [[Rabia]]-style weak multi-valued consensus only for the next command in a hot conflict class, while other classes use dependency fast paths. Risk: stitching class orders into global SMR order.
+65. **Bottom-as-Dependency-Barrier** - Idea: a `bottom` slot can serve as an execution barrier that lets replicas prune older uncertain dependencies. Proof hook: show barriers are globally agreed and do not skip required commands.
+66. **Probabilistic Relay Selection for Leaderless Quorums** - Idea: borrow [[PigPaxos]] random relay rotation for leaderless fast quorum collection to avoid repeatedly slow replicas. Safety unchanged if collected evidence is explicit.
+67. **Randomized Recovery Backoff** - Idea: reduce recovery storms by randomized per-command recovery retries. This is a liveness optimization, not a safety rule.
+68. **Coin-Selected Safe NoOp** - Idea: if recovery validation cannot distinguish payloads, decide between safe `noOp` and waiting using a common coin. Risk: weak validity and client semantics need explicit treatment.
+69. **Sparse-Log Compactor** - Idea: design log compaction first for protocols with `bottom` or `noOp` recovery, then make commit produce compaction-friendly evidence. Source motivation: [[Rabia]] open question.
+70. **Randomized Fast-Quorum Sampling** - Hypothesis: sample candidate fast quorums randomly but commit only after a deterministic quorum predicate is met. Evaluation hook: latency/tail reduction under partial failures.
+
+### H. Transport, Relay, and Aggregation Beyond PigPaxos
+
+Because transport overlays help throughput but not safety, use them to carry richer evidence without pretending they are votes.
+
+71. **Dependency Relay Aggregation** - Idea: relays aggregate dependency proposals with unique replica ids for [[EPaxos]] or [[Atlas]], reducing coordinator load while preserving evidence sets. Risk: aggregation must not hide dissent needed for fallback.
+72. **FastAck Relay Trees** - Idea: relay [[SwiftPaxos]] `FastAck` paths through regional trees and preserve exact signer/member ids. Evaluation hook: reduce quadratic message load.
+73. **Recovery Evidence CDN** - Idea: cache immutable commit and recovery certificates at relay nodes so recovering coordinators fetch evidence nearby. Safety hook: relays only serve evidence, never vote.
+74. **Graylisted Dependency Relays** - Idea: extend [[PigPaxos]] gray lists to avoid relays that often return partial or stale dependency aggregates. Liveness only.
+75. **Relay-Visible Conflict Metrics** - Idea: use relay aggregates to estimate conflict classes and switch them between leaderless and anchored modes. No safety dependence on estimates.
+76. **Overlapping Relay Groups for Quorums** - Idea: form relay groups so any global quorum can be reconstructed from group partials. Proof hook: leader counts unique voter ids, per [[PigPaxos]] modeling note.
+77. **Relay-Assisted Fast Recovery** - Idea: relays remember which replicas were contacted in a fast quorum, helping later recovery collect the right intersection. Risk: relay memory cannot be required for safety unless modeled as durable.
+78. **Two-Hop Leader Fast Path** - Idea: accept an added relay hop only for large clusters where leader CPU is the bottleneck; keep small clusters direct. Evaluation candidate rather than new safety mechanism.
+79. **Relay-Filtered Duplicate Requests** - Idea: relays suppress duplicate client requests before they reach leaders or command coordinators, reducing dependency noise. Need exactly-once ids as in [[CURP]].
+80. **Regional Aggregated Reads** - Idea: aggregate read-only dependency evidence regionally for [[SwiftPaxos]]-style speculative reads. Proof hook: client acceptance must still see a valid quorum certificate.
+
+### I. Erasure-Coded and Storage-Inspired SMR
+
+Because [[Pando]] separates value identity from fragment recovery, apply that separation to logs and certificates.
+
+81. **Erasure-Coded Commit Certificates** - Idea: store large dependency or path certificates as coded fragments while keeping a small value identity in consensus. Recovery reconstructs enough fragments before selecting a value.
+82. **Split Dependency Logs** - Idea: separate command payload, dependency metadata, and execution result into independently recoverable coded objects. Risk: agreement on identity is easier than ensuring all pieces are live.
+83. **Phase-1a Read for SMR State** - Idea: use a cheap discovery quorum to find a likely latest executed prefix, then require stronger recovery/write-back before serving a linearizable read.
+84. **Coded Witness Records** - Idea: witnesses store erasure-coded request records so recovery can tolerate unavailable witnesses without all-witness fast-path fragility. Proof hook: selected reconstruction set must contain every completed unsynced request.
+85. **Pando-Style Dependency Recovery** - Idea: recovery for dependency SMR first recovers dependency-certificate identity, then reconstructs enough replicas' dependency fragments to validate it.
+86. **Payload-Late Consensus** - Idea: consensus agrees on command id and dependency certificate first; payload is fetched or reconstructed later from coded storage. Risk: validity and client retry semantics.
+87. **Coded FastAck Paths** - Idea: compress [[SwiftPaxos]] dependency paths with erasure coding for archival/recovery, while normal fast commit uses explicit matching evidence.
+88. **Quorum Reads Over Dependency Frontiers** - Idea: adapt Pando's read/write-back pattern to dependency frontiers: reads discover, repair, then return from a reconstructed frontier.
+89. **Storage-Aware SMR Failover** - Idea: use storage split availability to choose recovery coordinators with nearby evidence, improving tail recovery latency without changing safe selection.
+90. **Single-Key Storage to Multi-Key SMR Bridge** - Hypothesis: start with [[Pando]]-style per-key chosen values and add a dependency layer only for multi-key commands. Risk: atomicity across keys becomes the central proof.
+
+### J. Modeling, Verification, and Negative-Space Candidates
+
+Because many defects are proof-shape defects, some candidates are protocol generators or restrictions rather than a single protocol.
+
+91. **Quorum Algebra Workbench** - Idea: create a protocol family only after deriving `n`, `f`, fast, slow, and recovery intersections in a standalone algebra table. Directly addresses [[quorum-intersection]] TODOs.
+92. **Commit Predicate Generator** - Idea: generate executable models from a declarative commit predicate and recovery-safe predicate. Candidate protocols are rejected if the generator finds ambiguous recovery.
+93. **Dependency Visibility Type System** - Idea: make it impossible in the model to commit conflicting commands without at least one dependency edge. Inspired by [[EPaxosStar]] visibility.
+94. **Instance-Command Separation Discipline** - Idea: protocol designs must keep instance id, command id, value id, and payload id as separate model types, per [[rocq-modeling-notes]]. This prevents false proofs from type collapse.
+95. **Bottom-Aware Validity Abstraction** - Idea: define a reusable validity property that explicitly permits `bottom` only for protocols like [[Rabia]], not for ordinary Paxos-family protocols.
+96. **Transport Refinement Proof Pattern** - Idea: every relay/aggregation protocol must prove a refinement theorem to a base protocol before claiming safety. [[PigPaxos]] is the anchor example.
+97. **Recovery Red-Team Template** - Idea: standardize candidate review around two incompatible recoveries, hidden timing assumptions, metadata blowup, and circular validation. This implements the skill's red-team questions.
+98. **No-BFT-Without-Source Rule** - Idea: keep crash-only candidates separate from BFT hypotheses until a BFT paper is ingested. This prevents transferring crash quorum formulas into [[bft-consensus]].
+99. **No-DAG-Without-Source Rule** - Idea: do not rename dependency-graph SMR as DAG consensus until DAG-based papers are ingested. Dependency metadata is background, not proof of DAG consensus.
+100. **Paper-Ingestion-Driven Protocol Generator** - Idea: after each new paper ingest, rerun this defect matrix and generate candidates only from newly observed limitations. This keeps brainstorming grounded in source pages instead of arbitrary recombination.
+
+## Ranked Shortlist
+
+| Rank | Candidate | Why it survives first red-team pass | Next artifact |
+|---|---|---|---|
+| 1 | Recoverable-Union EPaxos | Targets exact-matching brittleness using an already sourced [[Atlas]] predicate shape, while acknowledging [[EPaxosStar]] validation obligations | Quorum/recovery model for dependency union plus visibility |
+| 2 | Per-Key Swift Anchors | Narrows [[SwiftPaxos]] leader inclusion to conflict classes, attacking leader bottlenecks without removing anchors entirely | Conflict-class quorum formulas and multi-key counterexamples |
+| 3 | Execution-Ready Fast Commit | Directly targets the commit/execution gap from [[EPaxos-Revisited-2021]] | Simulator comparing commit latency and execution latency |
+| 4 | Recovery-First EPaxos Variant | Treats recovery validation as the source of truth, reducing fast/recovery mismatch | Small Rocq/TLA-style validation abstraction |
+| 5 | Majority Witness CURP | Attacks all-witness fragility, but has a crisp recovery-selection proof obligation | Witness quorum intersection derivation |
+| 6 | Dependency Relay Aggregation | Likely practical: changes transport load while preserving explicit evidence | Refinement proof to a non-relayed dependency protocol |
+| 7 | Adaptive `e`-Fast SMR | Uses sourced [[EPaxosStar]] parameters as an operational knob | Epoch-change safety proof |
+| 8 | SCC-First Commit Rule | Targets execution tails by changing the agreed object | SCC agreement and recovery model |
+| 9 | Weak-MVC Per Conflict Class | Uses [[Rabia]] only where deterministic ordering is suffering | Global order stitching proof |
+| 10 | Pando-Style Dependency Recovery | Separates identity from reconstructability for large certificates | Fragment identity/recovery proof |
+
+## Red-Team Notes
+
+- Any candidate that relaxes exact matching must define exactly what later recovery can reconstruct.
+- Any candidate with adaptive quorums must put the quorum-system version inside the certificate.
+- Any candidate using timing, leases, or measured load must keep those facts out of the safety theorem unless a sourced protocol justifies them.
+- Any candidate using witnesses must decide whether witnesses are separate crash domains, co-hosted components, or merely durable evidence stores.
+- Any candidate using `bottom` must define weak validity, retry semantics, and log compaction before claiming it simplifies recovery.
+- Any relay candidate must preserve unique voter identities and prove relays are transport refinements, not quorum members.
+
+## Next Proof and Evaluation Work
+
+1. Derive a standalone quorum algebra table for [[FastPaxos]], [[EPaxosStar]], [[Atlas]], and the top three candidates.
+2. Build a minimal model for Candidate 1 with command ids, dependency sets, fast quorum evidence, recovery quorum evidence, and visibility.
+3. Add a workload simulator that reports both commit latency and execution latency for dependency protocols.
+4. Create a recovery counterexample harness that searches for two recoveries selecting incompatible dependency sets.
+5. Revisit this page after ingesting one BFT paper and one DAG-based consensus paper; until then, BFT and DAG claims remain intentionally out of scope.
