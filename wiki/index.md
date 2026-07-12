@@ -73,5 +73,5 @@
 - [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
-- [[new-protocol-ideas]] - 100 speculative SMR/consensus protocol candidates across quorum, compatibility, dependency, recovery, relay, witness, randomized, and erasure-coded design dimensions.
+- [[new-protocol-ideas]] - 100 defect-driven SMR candidates across fast evidence, recovery, dependencies, quorum geometry, witnesses, randomization, relays, coding, and reconfiguration.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.

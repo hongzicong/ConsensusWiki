@@ -27,6 +27,7 @@ Main protocol anchors: [[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[
 | Randomized fallback trades density for simplicity | [[Rabia]] can decide `bottom` slots and retry requests | Because ambiguous proposal alignment is resolved by forfeiting a slot, the protocol avoids separate leader recovery at the cost of sparse logs | Commit rule, validity, retry policy |
 | Transport overlays do not change safety by themselves | [[PigPaxos]] relays aggregate unique votes but do not alter quorums | Because communication optimization preserves the old proof, it cannot fix leader placement or fast-path conflict defects alone | Overlay, aggregation, proof refinement |
 | Erasure-coded recovery separates identity from fragments | [[Pando]] distinguishes value identity, coded split availability, and Phase 1a/1b/2 quorums | Because cheap discovery is weaker than full recovery, read/write paths need different evidence shapes | Storage evidence, read path, split quorum |
+| Dynamic structure lacks an epoch proof | [[CURP]] exposes stale witness-list risk; [[Mencius]] revokes future owner slots; adaptive quorum and movable-anchor ideas would change evidence membership | Because old and new configurations may each produce locally valid evidence, reconfiguration can create two incomparable recovery histories unless certificates cross an explicit epoch boundary | Reconfiguration, epoch fencing, garbage collection |
 | Missing families are negative space | [[bft-consensus]] and [[dag-based-consensus]] are intentionally unpopulated | Because no sourced BFT or DAG protocol is ingested, ideas in those directions need future sources before being promoted | Fault model, DAG ordering, source coverage |
 
 ## Defect Clusters
@@ -59,7 +60,7 @@ Because ambiguous recovery is a recurring failure mode, design the recovery pred
 17. **Evidence Lattice Recovery** - Idea: represent recovery evidence as a lattice: accepted proposal > validated fast proposal > reconstructible no-op. Proof hook: prove monotonic selection prevents incompatible lower evidence.
 18. **Anti-Ambiguity Prepare** - Idea: add a prepare subphase that asks replicas to report not only accepted state but also "commands I would need validated before accepting this recovery". Cost: more recovery messages, likely acceptable if rare.
 19. **Self-Describing Fast Certificates** - Idea: each fast certificate includes enough quorum geometry to recompute its own recovery intersections. Useful for flexible quorums and dynamic relay groups.
-20. **Recovery Counterexample Harness** - Idea: treat the protocol as a candidate only if a small model checker cannot produce two recoveries that select incompatible dependencies from intersecting evidence. This is a research workflow candidate, not a protocol mechanism.
+20. **Dual-Recovery-Certificate SMR** - Idea: a fast commit carries both a value/command certificate and a separate recovery-hint certificate naming the evidence a later coordinator must reconstruct. Proof hook: show neither certificate is sufficient alone and every recovery quorum intersects the hint's evidence set strongly enough to preserve the committed value.
 
 ### C. Commit-Execution Gap Reduction
 
@@ -166,20 +167,20 @@ Because [[Pando]] separates value identity from fragment recovery, apply that se
 89. **Storage-Aware SMR Failover** - Idea: use storage split availability to choose recovery coordinators with nearby evidence, improving tail recovery latency without changing safe selection.
 90. **Single-Key Storage to Multi-Key SMR Bridge** - Hypothesis: start with [[Pando]]-style per-key chosen values and add a dependency layer only for multi-key commands. Risk: atomicity across keys becomes the central proof.
 
-### J. Modeling, Verification, and Negative-Space Candidates
+### J. Reconfiguration, Epochs, and Evidence Retirement
 
-Because many defects are proof-shape defects, some candidates are protocol generators or restrictions rather than a single protocol.
+Because the wiki's protocols rely on configuration-specific quorums, owners, witnesses, or relays, changing those structures needs a protocol-level handoff rather than a local configuration update.
 
-91. **Quorum Algebra Workbench** - Idea: create a protocol family only after deriving `n`, `f`, fast, slow, and recovery intersections in a standalone algebra table. Directly addresses [[quorum-intersection]] TODOs.
-92. **Commit Predicate Generator** - Idea: generate executable models from a declarative commit predicate and recovery-safe predicate. Candidate protocols are rejected if the generator finds ambiguous recovery.
-93. **Dependency Visibility Type System** - Idea: make it impossible in the model to commit conflicting commands without at least one dependency edge. Inspired by [[EPaxosStar]] visibility.
-94. **Instance-Command Separation Discipline** - Idea: protocol designs must keep instance id, command id, value id, and payload id as separate model types, per [[rocq-modeling-notes]]. This prevents false proofs from type collapse.
-95. **Bottom-Aware Validity Abstraction** - Idea: define a reusable validity property that explicitly permits `bottom` only for protocols like [[Rabia]], not for ordinary Paxos-family protocols.
-96. **Transport Refinement Proof Pattern** - Idea: every relay/aggregation protocol must prove a refinement theorem to a base protocol before claiming safety. [[PigPaxos]] is the anchor example.
-97. **Recovery Red-Team Template** - Idea: standardize candidate review around two incompatible recoveries, hidden timing assumptions, metadata blowup, and circular validation. This implements the skill's red-team questions.
-98. **No-BFT-Without-Source Rule** - Idea: keep crash-only candidates separate from BFT hypotheses until a BFT paper is ingested. This prevents transferring crash quorum formulas into [[bft-consensus]].
-99. **No-DAG-Without-Source Rule** - Idea: do not rename dependency-graph SMR as DAG consensus until DAG-based papers are ingested. Dependency metadata is background, not proof of DAG consensus.
-100. **Paper-Ingestion-Driven Protocol Generator** - Idea: after each new paper ingest, rerun this defect matrix and generate candidates only from newly observed limitations. This keeps brainstorming grounded in source pages instead of arbitrary recombination.
+91. **Epoch-Fenced Adaptive Quorums** - Idea: allow fast, slow, and recovery quorum policies to change only after a joint certificate intersects every quorum class in both adjacent epochs. Recovery first selects the highest certified epoch, then applies that epoch's safe-value rule. Proof hook: exclude mixed-epoch fast certificates.
+92. **Witness-List Handoff Consensus** - Idea: turn [[CURP]] witness-list changes into an explicit two-epoch handoff: old witnesses freeze and summarize unsynced requests, backups durably absorb that summary, and only then may clients use the new `WitnessListVersion`. Risk: zombie clients must be rejected without losing their completed requests.
+93. **Conflict-Class Split/Merge SMR** - Idea: dynamically split a hot conflict class into sub-classes or merge overlapping classes, with a barrier command that certifies all pre-change cross-class dependencies. Proof hook: multi-key commands spanning the barrier must have one unambiguous execution position.
+94. **Frontier-Certified Membership Change** - Idea: admit or remove replicas only at an execution frontier whose certificate proves every earlier committed command is reconstructible in the new configuration. This makes execution state, not merely accepted ballots, the reconfiguration boundary.
+95. **Dependency-Aware Joint Consensus** - Idea: during membership change, require old/new joint evidence only for commands whose dependency closure crosses the reconfiguration frontier; independent post-frontier commands may use the new configuration immediately. Risk: deciding whether a closure crosses the frontier cannot rely on incomplete local metadata.
+96. **Relay-Group Reconfiguration SMR** - Idea: reconfigure [[PigPaxos]]-style relay groups through a ballot-certified group map while retaining unique voter identities end to end. Old and new relays may forward concurrently, but the leader counts each replica once under the certified map. Proof hook: refinement to the unchanged base quorum.
+97. **Rotating-Owner Gap Containment** - Idea: modify [[Mencius]] so an owner failure revokes only a certified finite window of future slots; ownership beyond that window transfers by epoch instead of leaving an unbounded revocation tail. Risk: the old owner must be fenced from issuing late `SKIP` messages.
+98. **Request-ID Epoch Recovery** - Idea: bind stable client request ids to configuration epochs, then let recovery translate an unfinished old-epoch id into either the preserved command or an explicit retry token. This combines [[CURP]] duplicate suppression with [[EPaxosStar]] `Nop`/resubmission semantics without silently executing twice.
+99. **Certificate-Compacting Checkpoints** - Idea: checkpoint only after a quorum certifies both an executed state digest and a recovery frontier covering every still-possible fast decision. Replicas may then discard dependency paths, remembered fast quorums, and witness records below the frontier. Proof hook: no later recovery may require retired evidence.
+100. **Recovery-First Reconfigurable SMR** - Idea: define membership change as a special recovery ballot that gathers old-configuration evidence, chooses a safe command/dependency frontier, and installs the new configuration with that frontier as its initial state. Normal reconfiguration is therefore an instance of the protocol's safe-value rule, not a separate mechanism.
 
 ## Ranked Shortlist
 
@@ -204,6 +205,7 @@ Because many defects are proof-shape defects, some candidates are protocol gener
 - Any candidate using witnesses must decide whether witnesses are separate crash domains, co-hosted components, or merely durable evidence stores.
 - Any candidate using `bottom` must define weak validity, retry semantics, and log compaction before claiming it simplifies recovery.
 - Any relay candidate must preserve unique voter identities and prove relays are transport refinements, not quorum members.
+- Any reconfiguration candidate must fence old participants, state which old/new quorum classes intersect, and define when recovery evidence may be retired.
 
 ## Next Proof and Evaluation Work
 
