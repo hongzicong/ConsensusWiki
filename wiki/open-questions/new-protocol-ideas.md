@@ -213,4 +213,40 @@ Because the wiki's protocols rely on configuration-specific quorums, owners, wit
 2. Build a minimal model for Candidate 1 with command ids, dependency sets, fast quorum evidence, recovery quorum evidence, and visibility.
 3. Add a workload simulator that reports both commit latency and execution latency for dependency protocols.
 4. Create a recovery counterexample harness that searches for two recoveries selecting incompatible dependency sets.
+
+## Focused Latency Optimization Roadmap
+
+This roadmap responds to the four stable-run classes in [[latency]]. It does not claim that the candidates are safe or novel; each remains an `Idea`, `Inference`, or `Hypothesis` until its commit predicate, quorum intersections, and recovery rule are modeled.
+
+### Boundary of the opportunity
+
+- **Sourced fact:** [[SwiftPaxos]] reports `2δ` client-response latency through contention-free runs and `3δ` in a stable general run.
+- **Inference:** under a metric where the client sends a command and then waits for quorum-backed response evidence, `2δ` is a natural information-flow floor, not a proved universal lower bound.
+- **Hypothesis:** reducing stable general latency from `3δ` to `2δ` requires moving conflict ordering before the divergent observations, adding an ordering/timing premise, or changing what counts as a completed response. Merely shrinking a quorum does not reconcile different receive orders.
+
+### Ranked opportunities
+
+| Rank | Direction | Expected latency effect | Changed dimension | Main proof obligation |
+|---|---|---|---|---|
+| 1 | Recoverable non-matching fast evidence | Converts some receive-order disagreements from `3δ` fallback to `2δ` without claiming all general runs | Fast predicate and recovery certificate | Recovery reconstructs one conflict-visible, acyclic dependency result from threshold/normalized evidence |
+| 2 | Epoch-fenced conflict-class anchors | Bounds hot-item dependency and recovery tails while retaining leaderless cold paths | Leader role per conflict class | Cross-anchor and multi-key commands have one order; old/new anchor certificates cannot both commit incompatibly |
+| 3 | Execution-ready or SCC-first commit | Reduces commit-to-execute tail even if message-delay commit count is unchanged | Agreed object and commit rule | All replicas agree on the same executable batch/frontier and recovery preserves it |
+| 4 | Versioned adaptive quorum profiles | Keeps the fast path available across changing failures and WAN conditions | Quorum geometry and epoch metadata | Every certificate identifies its quorum version; recovery intersects all still-live certificate classes |
+| 5 | Witness-quorum durability | Preserves one-RTT commutative completion despite some witness loss | Durability and recovery selection | Every completed unsynced operation is present in the uniquely selected recovery evidence |
+| 6 | Regional placement, relays, and direct replies | Lowers physical `δ`, client `+1`, and tail load without changing logical rounds | Transport and quorum placement | Relays preserve voter identities; client evidence still represents a valid quorum |
+
+### Top candidate: recoverable non-matching evidence
+
+**Idea:** keep the two-hop client path, but replace all-or-nothing equality of dependency/path replies with a certificate split into an exact ordering core and a recoverable fringe. The core contains conflict edges needed for agreement; the fringe contains additional observations that may be deterministically validated or repaired before execution.
+
+Required next artifacts:
+
+1. Define the certificate object, including direct dependencies, path/acyclicity evidence, reporter identities, and quorum version.
+2. Derive fast/recovery intersection inequalities before selecting thresholds.
+3. Search for a counterexample where two quorums validate different cores or where individually valid path fragments form a cycle after union.
+4. Compare four metrics in simulation: client response, local commit, execution-ready time, and fast-path survival after one unavailable replica.
+
+### Practical low-risk optimization
+
+**Idea:** hedge fast and compatible slow evidence collection in parallel, then use the first valid certificate. This may remove timeout amplification and reduce tail latency without changing the commit predicate, but increases messages. It is safe only if both evidence streams vote for compatible state in the same ballot; otherwise it becomes a protocol change rather than a transport optimization.
 5. Revisit this page after ingesting one BFT paper and one DAG-based consensus paper; until then, BFT and DAG claims remain intentionally out of scope.

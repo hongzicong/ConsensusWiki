@@ -59,7 +59,7 @@ Message flow:
 4. A replica commits after it has processed the leader's `FastAck`, then receives matching `FastAck` evidence from all followers in some fast quorum and `D = dep[id]` is already committed.
 5. A non-co-located client accepts the leader's `Reply` after receiving matching dependency paths from the followers of a fast quorum.
 
-In the stable, contention-free case this gives two message delays from submission: one delay for `Propagate`, one delay for matching `FastAck`/`Reply` evidence.
+In the stable, contention-free case this gives client-response latency `2δ`: one message delay for `Propagate`, then one for matching `FastAck`/`Reply` evidence. In a stable general run the slow path gives `3δ`; see [[latency]].
 
 Read-only optimization: the speculative execution step does not have to run at the leader. A read-only command can be tentatively executed at any fast-quorum replica, and the client accepts that tentative result only when the fast-quorum dependency-path evidence matches. This reduces leader load for read-heavy workloads while keeping the command ordered through the same dependency evidence.
 

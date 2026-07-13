@@ -57,6 +57,7 @@
 - [[commit-rules]] - Commit predicates and safety evidence.
 - [[fault-models]] - Failure assumptions across protocols.
 - [[timing-assumptions]] - Safety/liveness timing assumptions.
+- [[latency]] - Stable client-response latency across sequential, conflict-free, contention-free, and general runs.
 - [[leader-roles]] - Leader/delegate involvement.
 - [[conflict-handling]] - Collisions, dependencies, and write conflicts.
 - [[proof-techniques]] - Main proof invariants.
@@ -73,5 +74,5 @@
 - [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
-- [[new-protocol-ideas]] - 100 defect-driven SMR candidates across fast evidence, recovery, dependencies, quorum geometry, witnesses, randomization, relays, coding, and reconfiguration.
+- [[new-protocol-ideas]] - 100 defect-driven SMR candidates plus a focused latency-optimization roadmap and proof agenda.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.

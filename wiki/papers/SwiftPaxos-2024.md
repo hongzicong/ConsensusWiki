@@ -27,6 +27,8 @@ Crash/non-Byzantine failures with at most `f` faulty replicas. Liveness uses an 
 ## Timing assumptions
 Designed for WANs with heterogeneous latencies. Safety is asynchronous; liveness follows after recovery stabilizes at a ballot with a correct trusted leader.
 
+For the paper's stable-run latency comparison, `δ` is the upper bound on one message delay. Table 1 measures the maximum time from command submission until the client can deliver a response and distinguishes sequential, conflict-free, contention-free, and general runs; see [[latency]].
+
 ## Main idea
 Commands carry dependencies on conflicting commands. Replicas agree on dependency paths using `FastAck` and `SlowAck`; execution follows the acyclic dependency graph. The implementation can also execute read-only commands optimistically at any fast-quorum replica, rather than only at the leader, while the client still waits for matching dependency-path evidence.
 
@@ -79,6 +81,8 @@ The proof defines `acc(b,id,c,P)` for accepted dependency paths by a fast or slo
 - Fast quorum intersection: `|Q1 intersect Q2| > N/2`.
 - `(C1)`: fast quorum size `> 3/4 N`.
 - `(C2)`: unique fixed majority fast quorum.
+- Stable contention-free client-response latency: `2δ`.
+- Stable general client-response latency: `3δ`.
 
 ## Relationship to other protocols
 SwiftPaxos is closely related to [[EPaxos]] through dependencies, to [[FastPaxos|Fast Paxos]] through fast-quorum reasoning, and to classic Paxos through ballots and leader recovery.
@@ -90,4 +94,4 @@ Message complexity is quadratic. The extracted PDF text did not expose full bibl
 - TODO: Capture exact pseudocode line numbers for the commit preconditions.
 
 ## Related pages
-[[SwiftPaxos]], [[dependency]], [[conflict]], [[fast-path]], [[leader]], [[recovery]]
+[[SwiftPaxos]], [[dependency]], [[conflict]], [[fast-path]], [[leader]], [[recovery]], [[latency]]
