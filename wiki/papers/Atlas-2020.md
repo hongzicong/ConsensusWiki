@@ -16,7 +16,7 @@ status: ingested
 Atlas is a leaderless SMR protocol for planet-scale deployments that makes the fast quorum size depend on the tolerated concurrent site failures `f`, not only on the total site count `n`.
 
 ## Why this paper matters
-Atlas is a useful bridge between [[EPaxos]]-style dependency SMR and Flexible Paxos-style quorum tuning: it keeps command coordinators leaderless, reduces fast quorum size to `floor(n/2) + f`, and gives an explicit recovery rule for preserving fast-path dependency decisions.
+Atlas is a useful bridge between [[EPaxos]]-style dependency SMR and [[FPaxos]]-style quorum tuning: it keeps command coordinators leaderless, reduces fast quorum size to `floor(n/2) + f`, and gives an explicit recovery rule for preserving fast-path dependency decisions.
 
 ## System model
 The system has `n` processes `P = {1, ..., n}` in an asynchronous distributed system. In a geo-distributed deployment, each process represents a data center. The process set is static; the paper notes that classical reconfiguration techniques can be added.
@@ -30,7 +30,7 @@ At most `f` processes may crash, where `1 <= f <= floor((n - 1)/2)`. Processes a
 Safety is asynchronous and quorum/recovery based. Liveness/performance require enough reachable sites to collect the needed fast, slow, or recovery quorums.
 
 ## Main idea
-Each command has a coordinator that collects dependency reports from a fast quorum. The coordinator commits in one round trip if every dependency in the proposed union is reported by at least `f` fast-quorum processes; otherwise it runs a Flexible Paxos-style slow path. Recovery gathers `n - f` replies and either preserves an accepted consensus proposal, reconstructs a possible fast-path proposal, or chooses `noOp`.
+Each command has a coordinator that collects dependency reports from a fast quorum. The coordinator commits in one round trip if every dependency in the proposed union is reported by at least `f` fast-quorum processes; otherwise it runs an [[FPaxos]]-style slow path. Recovery gathers `n - f` replies and either preserves an accepted consensus proposal, reconstructs a possible fast-path proposal, or chooses `noOp`.
 
 ## Protocol roles
 - Client.
@@ -89,7 +89,7 @@ count(id) = |{j in Q | id in dep_j}|
 This means each dependency included in the final union was reported by at least `f` fast-quorum processes. Unlike EPaxos-style matching-reply fast paths, Atlas can take the fast path even when non-commuting commands are observed in different orders, as long as the dependency union is recoverable under `f` failures. When `f = 1`, the condition always holds and the fast quorum is a majority.
 
 ## Slow path
-If the fast-path condition fails, the coordinator runs a per-identifier consensus instance using Flexible Paxos. The initial coordinator skips Phase 1 and sends `MConsensus` at its reserved ballot to a slow quorum of size `f + 1`. After `f + 1` `MConsensusAck` replies, it broadcasts `MCommit`.
+If the fast-path condition fails, the coordinator runs a per-identifier consensus instance using [[FPaxos]]. The initial coordinator skips Phase 1 and sends `MConsensus` at its reserved ballot to a slow quorum of size `f + 1`. After `f + 1` `MConsensusAck` replies, it broadcasts `MCommit`.
 
 The paper also gives a slow-path optimization: instead of proposing `union_Q dep`, the coordinator may propose `union^f_Q dep` to prune dependencies reported by fewer than `f` fast-quorum processes.
 
@@ -162,7 +162,7 @@ fast path condition: union_Q dep = union^f_Q dep
 ## Relationship to other protocols
 Atlas shares the leaderless per-command coordination shape of [[EPaxos]], but differs in two central ways: its fast quorum size is `floor(n/2) + f`, and its fast path allows non-matching dependency replies when each final dependency is reported by at least `f` fast-quorum members.
 
-Compared with leader-based Flexible Paxos, Atlas also uses the small slow quorum `f + 1`, but this is only the fallback for a leaderless dependency protocol; recovery uses `n - f`.
+Compared with leader-based [[FPaxos]], Atlas also uses the small slow quorum `f + 1`, but this is only the fallback for a leaderless dependency protocol; recovery uses `n - f`.
 
 ## Limitations
 - Atlas trades off high simultaneous site-failure tolerance for lower latency under small `f`.

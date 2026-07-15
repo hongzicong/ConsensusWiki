@@ -8,5 +8,7 @@ A [[dependency]] records that one command must be considered before another. EPa
 
 [[Atlas]] also commits dependency sets without sequence numbers. Its fast-path condition does not require identical dependency replies; it requires the final dependency union to be recoverable because each included dependency appears in at least `f` fast-quorum replies.
 
+[[Copilot]] uses a different shape: each entry in one pilot log has one dependency naming a prefix endpoint in the other pilot log. The two per-log orders plus these cross-log dependencies define a combined total order. Final dependencies may cycle, so all replicas use fixed pilot-over-copilot priority to order a cycle.
+
 ## Related pages
-[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]]
+[[FastPaxos]], [[EPaxos]], [[EPaxosStar]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Copilot]]

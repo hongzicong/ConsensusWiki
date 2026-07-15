@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-family
 family: paxos
-protocols: [FastPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
 tags: [paxos]
 ---
 
@@ -22,5 +22,13 @@ These protocols preserve Paxos-style safety through quorum evidence while optimi
 | [[Atlas]] | Leaderless dependency order with small site-failure budget | Fast quorum `floor(n/2) + f`, slow quorum `f + 1`, recovery quorum `n - f` | Low planet-scale latency when concurrent site failures are rare | May block if more than `f` sites are unreachable | [[Atlas-2020]] |
 | [[SwiftPaxos]] | Leader-including fast quorum dependencies | Keeps dependency graph acyclic | Low latency and simpler execution | Quadratic messages | [[SwiftPaxos-2024]] |
 | [[Pando]] | Erasure-coded quorum split recovery | Separates Phase 1a/1b/2 quorums | Near-optimal cost/latency | Single-key focus | [[Pando-2020]] |
+| [[Copilot]] | Redundant pilot/copilot logs with dependency merge and per-entry takeover | Applies Paxos independently to two logs and adds EPaxos-inspired cross-log prefix dependencies | Normal client latency despite one slow replica | Duplicated work and subtle ambiguous fast-evidence recovery | [[Copilot-2020]] |
+| [[Avicenna]] | Single executable log plus independent shadow processing | Restricts normal acceptors so the next leader can recover from two non-standby logs | Multi-Paxos normal latency plus one-fail-slow tolerance | Shadow-processing throughput cost; full crash liveness may await Armageddon phase | [[Avicenna-2026]] |
+| [[Bodega]] | Majority-leased roster of leader and per-key read responders | Adds responder-covering writes and threshold-certified local reads to classic consensus | Local linearizable reads survive interfering writes | Distant/slow responders extend write commit; leases require bounded drift | [[Bodega-2026]] |
+| [[Jetpack]] | Parallel fast layer plus unchanged original consensus path | Adds proposer promises, same-view superquorums, and a prioritized recovery-set marker | Retrofittable 1-RTT fast commit | Host prerequisites, contention, and multi-leader processing overhead | [[Jetpack-2026]] |
+| [[FPaxos]] | Cross-phase-only quorum intersection | Separates Phase 1 and Phase 2 quorum families while retaining Paxos value selection | Smaller/topology-aware steady-state quorums | Larger Phase 1 may reduce leader-recovery availability | [[Flexible-Paxos-2016]] |
+| [[OmniPaxos]] | Quorum-connected election plus prefix log synchronization | Separates election, growing-log replication, and reconfiguration | Stable progress with one QC server under modeled partial partitions | Partial synchrony, heartbeat convergence, and complete migration still required | [[Omni-Paxos-2023]] |
+| [[HydraPaxos]] | Network pre-orders operations through multi-sequencer [[Hydra]] groupcast | Replaces application request ordering with ordered-unreliable network delivery | One client RTT without one network serialization point | Depends on Hydra clocks/configuration and extra agreement for drops | [[Hydra-2023]] |
+| [[WPaxos]] | Per-object leaders over WAN flexible quorums | Uses wide Phase 1 to move ownership and local Phase 2 for repeated commits | Adapts placement to access locality with per-object linearizability | Object migration adds WAN latency and can thrash | [[WPaxos-2020]] |
 
 

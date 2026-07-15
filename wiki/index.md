@@ -13,6 +13,14 @@
 - [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums and optimized read-only execution at fast-quorum replicas.
 - [[Rabia-2021]] - Randomized leaderless SMR using Weak-MVC and forfeited `⊥` slots.
 - [[CURP-2019]] - Primary-backup fast replication using commutative unordered witness durability.
+- [[Copilot-2020]] - Dual-pilot SMR that preserves normal latency despite one slow replica.
+- [[Avicenna-2026]] - Single-leader geo-SMR with counterfactual fail-slow detection and fast shadow-leader rotation.
+- [[Bodega-2026]] - Lease-based Paxos extension for local linearizable reads at arbitrary per-key responders.
+- [[Jetpack-2026]] - General fast-path shim with view-safe proposer promises and prioritized recovery sets.
+- [[Flexible-Paxos-2016]] - Paxos generalization requiring intersection only between Phase 1 and Phase 2 quorums.
+- [[Omni-Paxos-2023]] - Connectivity-aware SMR separating leader election, prefix log replication, and reconfiguration.
+- [[Hydra-2023]] - Multi-sequencer network ordering with monotonic clocks, per-group counters, and ordered drop detection.
+- [[WPaxos-2020]] - WAN multi-leader Paxos with object stealing and topology-aware flexible quorums.
 
 ## Protocols
 - [[FastPaxos]] - Classic Paxos extended with fast rounds.
@@ -26,6 +34,15 @@
 - [[SwiftPaxos]] - WAN SMR using leader-including fast quorums, `FastAck`/`SlowAck`, client-visible dependency-path evidence, and distributed speculative reads.
 - [[Rabia]] - Leaderless randomized SMR with weak multi-valued consensus.
 - [[CURP]] - Primary-backup protocol that completes commutative updates in 1 RTT via witnesses.
+- [[Copilot]] - Dual-leader dependency SMR with redundant processing and per-entry fast takeover.
+- [[Avicenna]] - Multi-Paxos-style SMR that masks one fail-slow replica using independent shadow processing and restricted-quorum rotation.
+- [[Bodega]] - Multi-Paxos-style SMR with roster leases and responder-covering writes for local linearizable reads.
+- [[Jetpack]] - Plugin framework adding a conflict-free 1-RTT path to compatible consensus protocols.
+- [[FPaxos]] - Paxos with independently shaped Phase 1 and Phase 2 quorum families.
+- [[OmniPaxos]] - Sequence Paxos plus quorum-connected leader election and service-layer reconfiguration.
+- [[Hydra]] - Ordered-unreliable groupcast using multiple active sequencers without traffic serialization.
+- [[HydraPaxos]] - NOPaxos-derived SMR layered on Hydra with one-round-trip majority commit.
+- [[WPaxos]] - Per-object WAN Paxos using cross-zone ownership quorums and local commit quorums.
 
 ## Concepts
 - [[quorum]] - Evidence sets and intersection requirements.
@@ -41,6 +58,14 @@
 - [[common-coin]] - Shared random bit abstraction used by Rabia's Weak-MVC.
 - [[SMR]] - State-machine replication by ordered command execution.
 - [[witness]] - CURP temporary unordered durability component.
+- [[slowdown-tolerance]] - Performance resilience when replicas remain responsive but slow.
+- [[counterfactual-evaluation]] - Parallel estimation of alternative-system performance without letting the shadow path control correctness.
+- [[roster-lease]] - Majority-backed agreement on leader and per-key responder metadata with catch-up thresholds.
+- [[view-change-hazard]] - Loss or reordering of fast-path promises when a new proposer set takes over.
+- [[flexible-quorum]] - Phase-specific quorum families constrained only by safety-relevant intersections.
+- [[partial-connectivity]] - Link-level partitions that leave inconsistent reachability views among live servers.
+- [[sequence-consensus]] - Consensus over a strictly growing, prefix-comparable command log.
+- [[object-stealing]] - Moving per-object leadership through Paxos Phase 1 as access locality changes.
 
 ## Properties
 - [[agreement]] - No incompatible decisions.
@@ -61,6 +86,7 @@
 - [[leader-roles]] - Leader/delegate involvement.
 - [[conflict-handling]] - Collisions, dependencies, and write conflicts.
 - [[proof-techniques]] - Main proof invariants.
+- [[reconfiguration]] - Configuration boundaries, decided-state migration, and startup conditions.
 - [[paxos-family]] - Paxos-family overview.
 - [[fast-consensus]] - Fast consensus overview.
 - [[leaderless-protocols]] - Leaderless protocols overview.
@@ -74,5 +100,5 @@
 - [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
-- [[new-protocol-ideas]] - 100 defect-driven SMR candidates plus a focused latency-optimization roadmap and proof agenda.
+- [[new-protocol-ideas]] - 100 defect-driven SMR candidates spanning recovery, role vetoes, connectivity, network ordering, object locality, and reconfiguration.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.

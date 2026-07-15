@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: latency
-protocols: [Paxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos]
+protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
 tags: [latency, fast-path, slow-path, contention, stable-run]
 ---
 
@@ -38,6 +38,14 @@ Sequential latency measures an unloaded service. Conflict-free latency measures 
 | [[EPaxos]] | `2δ+1` | `2δ+1` | `2δ+1` | `O(nδ)` | [[SwiftPaxos-2024]], Table 1 |
 | [[CURP]] + N²Paxos | `2δ` | `2δ` | `3δ+1` | `3δ+1` | [[SwiftPaxos-2024]], Table 1 |
 | [[SwiftPaxos]] | `2δ` | `2δ` | `2δ` | `3δ` | [[SwiftPaxos-2024]], Table 1 and Proposition 11 |
+| [[Copilot]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Copilot-2020]] uses a different slowdown-focused empirical metric |
+| [[Avicenna]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Avicenna-2026]] proves/evaluates a Multi-Paxos-shaped normal path and fail-slow counterfactual metric, not this four-class table |
+| [[Bodega]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Bodega-2026]] gives a separate read/write/interference latency model, not this command-concurrency table |
+| [[Jetpack]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Jetpack-2026]] states a client-RTT plugin fast path and host fallback, not this `δ`-class model |
+| [[FPaxos]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Flexible-Paxos-2016]] changes quorum collection size/shape but does not derive this four-class client metric |
+| [[OmniPaxos]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Omni-Paxos-2023]] reports one stable leader-to-majority round trip and separate partition-recovery timeouts, not this four-class metric |
+| [[HydraPaxos]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Hydra-2023]] reports one client RTT in the no-drop normal case, not the four-class latency metric |
+| [[WPaxos]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[WPaxos-2020]] reports locality-dependent WAN latency, not the four stable-run classes |
 
 The source table merges adjacent cells with the same value; the values are expanded above across all covered classes. Preserve `+1` literally: in the paper's notation it denotes one additional message delay for a non-colocated client.
 
@@ -55,7 +63,44 @@ The source table merges adjacent cells with the same value; the values are expan
 - `FastPaxos+` is the paper's named variant; do not silently substitute the base [[FastPaxos]] protocol.
 - The `CURP + N²Paxos` row is a composition described by the SwiftPaxos paper. It is not the standalone [[CURP]] primary-backup protocol, whose own paper reports a one-RTT commutative-update path under a different setup.
 - [[Atlas]], [[EPaxosStar]], [[PigPaxos]], [[Rabia]], and standalone [[CURP]] are absent from Table 1. [[Pando]] is a storage protocol rather than the same SMR command-response object. Their four-class cells remain `Unclear` until derived under this exact metric.
+- [[Copilot]] evaluates whether latency remains near its no-slowdown baseline when any one replica is slow. That `T` versus counterfactual `T'` notion is useful but cannot be silently converted into the four stable-run `δ` classes above.
+- [[Avicenna]] reports the same normal-case message-delay latency as Multi-Paxos and defines `ε-s` fail-slow tolerance against removing the slow replicas. Neither claim supplies the four workload-class cells above, so they remain `Unclear`.
+- [[Bodega]] models local reads and interfering writes rather than these four command-run classes. Its cells remain `Unclear`; its source formulas are recorded separately here.
+- [[Jetpack]] states 1 client RTT for successful conflict-free fast commitment and otherwise inherits host latency. That does not uniquely determine these four `δ` classes across every compatible host.
+- [[FPaxos]] retains the Paxos phase/message shape. Smaller or better-placed `Q2` can lower measured steady-state latency, but the exact `δ` row depends on the surrounding Multi-Paxos client/leader path and is not given by the source.
+- [[OmniPaxos]] reports stable Sequence Paxos replication and partial-partition recovery using different metrics. These results cannot be converted into the SwiftPaxos four-class `δ` table without specifying client placement and response semantics.
 - General latency assumes the system is already stable. It excludes leader election, recovery before stabilization, and the unbounded delays possible in a fully asynchronous run.
+
+## Bodega read-oriented latency model
+
+[[Bodega-2026]], Table 1 uses different symbols and assumes each protocol's most read-optimized configuration while tolerating `f = floor(n / 2)` faults. For Bodega it states:
+
+```text
+write latency W = l + N
+quiescent read latency R = c
+interfered read latency R* = c ~ c + m/2
+read degradation period D* = m/2
+```
+
+Here `l` is client-leader RTT, `c` is client-nearest-server RTT, `m` is time to establish a simple majority, and `N` is time to form an all-node quorum. These formulas must not be substituted into the `δ` table above.
+
+## Jetpack plugin latency model
+
+[[Jetpack-2026]] contrasts a successful 1-client-RTT fast commit with the host protocol's original path, typically 2 client RTTs for a remote leader. Both paths run concurrently, so failure of the fast path does not add a sequential retry round. Contention, view mismatch, proposer membership, host locality, and saturation determine which path returns first; the paper reports up to 60% average commit-latency reduction across its integrations.
+
+## FPaxos quorum-latency model
+
+[[Flexible-Paxos-2016]] does not reduce protocol phases. It reduces the number of Phase 2 acceptors a stable leader waits for and allows topology-aware quorum membership. The prototype reports lower average latency and higher throughput for smaller `Q2`, but also notes that sending only to a selected quorum can add retransmission delay if those acceptors are slow or failed. Leader-change latency/availability depends separately on `Q1`.
+
+## OmniPaxos replication and recovery model
+
+[[Omni-Paxos-2023]] states that stable Sequence Paxos decides through one round trip from the leader to a majority and pipelines later entries. In its evaluation, BLE heartbeat traffic contributed at most `0.02%` of total I/O. Under the tested partial-connectivity scenarios, quorum-loss recovery averaged four heartbeat rounds, while constrained-election recovery took three election timeouts. These are component-specific empirical/model claims, not entries in the four stable workload classes above.
+
+## HydraPaxos and WPaxos latency models
+
+[[HydraPaxos]] states one client round trip in a stable no-drop configuration. Its receiver frontier, client/leader placement, and drop recovery are not parameters in the four-class table, so no `δ` cells are inferred.
+
+[[WPaxos]] latency depends on ownership state: a current local owner runs nearby Phase 2, while a remote first access or locality shift adds WAN Phase 1 [[object-stealing]]. This locality/ownership dimension is also absent from the four-class table.
 
 ## Common pitfalls
 

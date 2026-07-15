@@ -49,7 +49,7 @@ union_Q dep = union^f_Q dep
 where `union^f_Q dep` includes only dependencies reported by at least `f` members of the fast quorum. For `f = 1`, this condition always holds and the fast quorum is a majority.
 
 ## Slow path
-If the fast-path condition fails, the coordinator runs a Flexible Paxos-style Phase 2 over a slow quorum of size `f + 1`. The initial coordinator can skip Phase 1 because it owns the initial ballot.
+If the fast-path condition fails, the coordinator runs an [[FPaxos]]-style Phase 2 over a slow quorum of size `f + 1`. The initial coordinator can skip Phase 1 because it owns the initial ballot.
 
 ## Recovery
 A recovery coordinator collects `n - f` `MRecAck` replies. It preserves the highest accepted slow-path proposal if one exists; otherwise it reconstructs possible fast-path dependencies from a known initial fast quorum; otherwise it proposes `noOp`.

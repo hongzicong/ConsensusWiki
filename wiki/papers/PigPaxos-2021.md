@@ -131,7 +131,7 @@ Progress requires enough live nodes for a majority and communication that eventu
 - Unlike [[FastPaxos]], PigPaxos does not let clients/proposers bypass the leader and does not require fast-quorum recovery.
 - Unlike [[EPaxos]], [[Atlas]], and [[SwiftPaxos]], PigPaxos does not use dependency metadata or leaderless command coordination.
 - Unlike [[Mencius]], PigPaxos does not rotate the command leader; it rotates relay nodes underneath a stable leader.
-- The paper notes Pig can be combined with Flexible Paxos-style quorum ideas, but that is not PigPaxos's base protocol.
+- The paper notes Pig can be combined with [[FPaxos]]-style quorum ideas, but that is not PigPaxos's base protocol.
 
 ## Limitations
 - PigPaxos still has a single decision-making leader.

@@ -76,7 +76,7 @@ Unlike [[Mencius]], PigPaxos rotates relays rather than leaders. Unlike [[EPaxos
 
 ## Open questions
 - TODO: Model dynamic and overlapping relay groups if they are used beyond the paper's base protocol.
-- TODO: Check whether combining PigPaxos with Flexible Paxos changes any comparison-page quorum statements after an FPaxos paper is ingested.
+- How should relay groups and [[FPaxos]] quorum members be co-designed without hiding unique voter evidence? Base PigPaxos remains majority-based.
 
 ## Sources
 - [[PigPaxos-2021]]

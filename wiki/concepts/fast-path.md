@@ -16,6 +16,7 @@ Examples:
 - [[SwiftPaxos]] uses matching FastAck dependency evidence, with SlowAck fallback.
 - [[Rabia]] can terminate Weak-MVC in three message delays; the fast outcome may be a request or a forfeited `⊥` slot.
 - [[CURP]] can complete primary-backup updates in 1 RTT when all witnesses durably record the request and the master can safely execute it speculatively.
+- [[Copilot]] can fast-commit an initial cross-log dependency after `f + floor((f + 1) / 2)` compatible `FastAcceptOk` replies including the proposing pilot.
 
 For formal modeling, define the fast path by its commit predicate and recovery obligation: if something fast-commits, every later recovery quorum must contain enough evidence to preserve the same decision or compatible metadata.
 
@@ -25,5 +26,19 @@ For formal modeling, define the fast path by its commit predicate and recovery o
 
 [[CURP]] is a useful boundary case: it has a true 1 RTT fast path, but the evidence is unordered witness durability plus commutativity, not an ordered consensus quorum.
 
+[[Copilot]] shows why fast evidence and recovery evidence must be modeled together. A recovery majority may see only `floor((f + 1) / 2)` fast accepts from a committed fast quorum; in the ambiguous count range, safe recovery also examines the other pilot's log.
+
+[[Bodega]] is a read-path boundary case: a stable, caught-up responder answers locally when its newest key write is committed or has `m` early accept notifications. This is a true client-latency fast path, but it does not change the write-consensus value-selection rule.
+
+[[Jetpack]] makes the fast path a reusable shim: a command fast-commits after same-view acknowledgements from `f + ceil(f/2) + 1` replicas including all host proposers. The host path runs concurrently and must later honor the same conflict order across view changes.
+
+[[FPaxos]] is a non-example: a smaller stable-leader Phase 2 quorum can reduce latency and load, but it does not bypass the leader, eliminate a phase, or introduce a separate fast-round commit predicate.
+
+[[OmniPaxos]] is also a non-example. Its prepared Sequence Paxos leader decides through one pipelined leader-to-majority round trip, but there is no separate fast quorum, client bypass, or conflict-dependent commit predicate.
+
+[[Hydra]] is an ordering-layer boundary case: its normal message uses one sequencer pass, but that produces ordered delivery/drop evidence rather than application commit. [[HydraPaxos]] turns the evidence into a one-client-RTT SMR path by waiting for consistent majority replies including the leader.
+
+[[WPaxos]] is another non-example: after [[object-stealing]] establishes a stable owner, repeated local Phase 2 lowers WAN latency, but the owner remains on the path and no separate fast quorum or conflict-dependent predicate exists.
+
 ## Related pages
-[[FastPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
+[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Copilot]], [[Bodega]], [[Jetpack]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
