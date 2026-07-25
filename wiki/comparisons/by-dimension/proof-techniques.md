@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: proof techniques
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
 tags: [proof]
 ---
 
@@ -22,6 +22,7 @@ tags: [proof]
 | [[Pando]] | Proposal/value/split evidence | Later proposals recover any earlier chosen value |
 | [[Rabia]] | Weak-MVC phase state and votes | Decisions within a phase agree; once decided, the next phase is value-locked |
 | [[CURP]] | Backup history plus one selected witness's unordered request set | Any fast-completed unsynced request is in every witness; selected-witness replay is order-independent because records commute |
+| [[Hermes]] | Per-key state, total logical timestamp, full-value invalidation, live epoch, and replay state | A read returns iff `Valid`; all current readers were invalidated before completion; exact-match validation and original-TS replay preserve the winning value/order |
 | [[Copilot]] | Two per-pilot logs, cross-log prefix dependencies, per-entry ballot evidence, and deduplication IDs | Every committed cross-log pair is dependency-oriented in at least one direction; each entry has one recovered value; fixed priority orders cycles |
 | [[Avicenna]] | Phase-tagged real-log entries, restricted acceptor sets, and merged rotation logs | A committed command remains at the same index in every later phase; every later real leader preserves the committed prefix |
 | [[Bodega]] | Ballot-tagged rosters, directional lease states, responder-covered writes, and per-grantor acceptance thresholds | At most one roster is stable; every local read responder contains every earlier acknowledged write |
@@ -41,6 +42,8 @@ tags: [proof]
 [[Rabia-2021]] uses randomized consensus to avoid a separate recovery proof. The key proof obligation is value-locking: if one replica decides a binary value, later phases force non-decided replicas to carry the same value until they decide.
 
 [[CURP-2019]] proves recovery by splitting history into a synced backup prefix and an unsynced suffix. The backup restores the synced prefix; one witness recovers completed unsynced operations; commutativity and duplicate suppression make replay safe.
+
+[[Hermes-2020]] makes readability the main invariant: only `Valid` keys may answer. Write-all invalidation establishes that state's freshness inside one epoch; timestamp equality prevents stale validation; full-value replay preserves interrupted updates. The paper reports TLA+ checks but does not enumerate named lemmas in the PDF.
 
 [[Copilot-2020]] separates three proof layers: per-entry agreement inside each pilot log, orientation of every committed pair across logs, and deterministic execution of the combined order. Its ambiguous fast-evidence interval is a reminder that quorum intersection can guarantee evidence exists without making a count-only recovery rule sufficient.
 

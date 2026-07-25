@@ -21,6 +21,7 @@
 - [[Omni-Paxos-2023]] - Connectivity-aware SMR separating leader election, prefix log replication, and reconfiguration.
 - [[Hydra-2023]] - Multi-sequencer network ordering with monotonic clocks, per-group counters, and ordered drop detection.
 - [[WPaxos-2020]] - WAN multi-leader Paxos with object stealing and topology-aware flexible quorums.
+- [[Hermes-2020]] - Membership-based single-key replication using invalidations, logical timestamps, and replayable writes.
 
 ## Protocols
 - [[FastPaxos]] - Classic Paxos extended with fast rounds.
@@ -43,6 +44,7 @@
 - [[Hydra]] - Ordered-unreliable groupcast using multiple active sequencers without traffic serialization.
 - [[HydraPaxos]] - NOPaxos-derived SMR layered on Hydra with one-round-trip majority commit.
 - [[WPaxos]] - Per-object WAN Paxos using cross-zone ownership quorums and local commit quorums.
+- [[Hermes]] - Read-one/write-all replication with local reads, per-update coordinators, leased membership, and safe write replay.
 
 ## Concepts
 - [[quorum]] - Evidence sets and intersection requirements.
@@ -66,6 +68,8 @@
 - [[partial-connectivity]] - Link-level partitions that leave inconsistent reachability views among live servers.
 - [[sequence-consensus]] - Consensus over a strictly growing, prefix-comparable command log.
 - [[object-stealing]] - Moving per-object leadership through Paxos Phase 1 as access locality changes.
+- [[invalidation]] - Temporarily disabling local reads while an update becomes visible to every authorized replica.
+- [[reliable-membership]] - Leased, epoch-fenced agreement on the live replica set used by membership-based protocols.
 
 ## Properties
 - [[agreement]] - No incompatible decisions.
@@ -100,5 +104,5 @@
 - [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
-- [[new-protocol-ideas]] - 100 defect-driven SMR candidates spanning recovery, role vetoes, connectivity, network ordering, object locality, and reconfiguration.
+- [[new-protocol-ideas]] - 100 defect-driven SMR candidates with evidence clusters, a ranked shortlist, red-team attacks, and next proof/model artifacts.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.

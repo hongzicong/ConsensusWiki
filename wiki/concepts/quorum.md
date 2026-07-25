@@ -12,6 +12,8 @@ A [[quorum]] is a set of participants whose evidence is sufficient for a protoco
 
 [[CURP]] uses an all-witness durability rule rather than majority voting in its primary-backup fast path: with one master, `f` backups, and `f` witnesses, a 1 RTT update must be recorded by all `f` witnesses. Recovery restores one backup and replays one selected witness.
 
+[[Hermes]] uses an all-live-members acknowledgment rule rather than a majority data quorum. For epoch membership `M_e`, the coordinator applies locally and waits for `|M_e| - 1` remote follower acknowledgments. A majority-based [[reliable-membership]] service may replace `M_e` only after old leases expire; it is a control-plane quorum, not the write commit quorum.
+
 [[Copilot]] uses `n = 2f + 1`, a fast quorum of `f + floor((f + 1) / 2)` including the proposing pilot, and majority `f + 1` quorums for regular Accept and takeover. The fast/recovery intersection lower bound is `floor((f + 1) / 2)`, which supplies evidence but does not always identify the safe recovery value without inspecting the other log.
 
 [[Bodega]] uses majority size `m = ceil(n / 2)` but strengthens each write quorum to cover every active responder for the written key. A responder also needs `m` active [[roster-lease]] grants and committed-prefix coverage for thresholds from some `m` grantors before serving locally.
@@ -27,5 +29,5 @@ A [[quorum]] is a set of participants whose evidence is sufficient for a protoco
 [[WPaxos]] composes zone and node choices. `Q1` takes `f_n + 1` nodes from each of `Z - f_z` zones; `Q2` takes `l - f_n` nodes from each of `f_z + 1` zones. Their sizes are `(f_n + 1)(Z - f_z)` and `(l - f_n)(f_z + 1)`, and every cross-phase pair intersects even though same-phase quorums may not.
 
 ## Related pages
-[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Copilot]], [[Bodega]], [[Jetpack]], [[partial-connectivity]], [[sequence-consensus]], [[flexible-quorum]]
+[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[flexible-quorum]]
 

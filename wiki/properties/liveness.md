@@ -8,6 +8,8 @@ Liveness is conditional in asynchronous consensus; each paper states progress un
 
 [[Rabia]] gives probabilistic liveness: each Weak-MVC phase has probability at least `1/2` of leading to termination, and a slot terminates with probability 1 when a majority of replicas is non-faulty.
 
+[[Hermes]] completes in a stable membership when every live member responds. Message loss causes retransmission or replay; a crashed member blocks the write-all path until RM waits out leases and installs a new epoch. Reads and new writes may stall while their local key is not `Valid`, and only the primary partition serves during a network split.
+
 [[Copilot]] assumes eventual partial synchrony and eventual message delivery. A double-induction argument advances one of the two executed log prefixes; unresolved dependencies trigger fast takeover, while failure of both pilots triggers view changes. Its separate [[slowdown-tolerance]] goal asks for near-normal latency with one slow replica, which is stronger than eventual completion alone.
 
 [[Avicenna]] assumes at most `f` faulty replicas, eventual communication within timeouts among a majority, and persistent client retransmission. Missing commits trigger repeated phase rotations. Periodic Armageddon phases make all `2f + 1` replicas non-standbys, so the deterministic leader schedule eventually reaches a phase containing a live majority and live real leader; empty log gaps are filled with `no-op` before execution advances.
@@ -25,4 +27,4 @@ Liveness is conditional in asynchronous consensus; each paper states progress un
 [[WPaxos]] progresses while at least one valid `Q1` and `Q2` remain alive and leader contention resolves. If every `Q1` is unavailable, object stealing stops, but an existing owner may continue serving its objects where a valid `Q2` remains; this is partial availability, not full ownership mobility.
 
 ## Related pages
-[[PigPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[slowdown-tolerance]], [[agreement]], [[recovery]], [[quorum]]
+[[PigPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[Hermes]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[slowdown-tolerance]], [[agreement]], [[recovery]], [[quorum]]

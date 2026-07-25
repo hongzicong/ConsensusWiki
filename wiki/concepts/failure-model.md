@@ -12,5 +12,7 @@ The ingested papers assume non-Byzantine failures unless marked otherwise. Progr
 
 [[Hydra]] separates sequencer/link failure and packet loss from receiver-replica failure. The primitive detects partially delivered messages but delegates receiver durability to an application quorum. [[HydraPaxos]] uses `n = 2f + 1` replicas and tolerates `f` crashes.
 
+[[Hermes]] assumes crash-stop processes and networks that may reorder, duplicate, or lose messages or partition. Timestamps and replay handle message faults within an epoch; leased [[reliable-membership]] makes minority replicas stop serving before the primary partition installs a new live set.
+
 ## Related pages
-[[FastPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[EPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[Copilot]], [[partial-connectivity]], [[slowdown-tolerance]]
+[[FastPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[EPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[Hermes]], [[Copilot]], [[reliable-membership]], [[partial-connectivity]], [[slowdown-tolerance]]

@@ -9,6 +9,7 @@
 - [[Copilot]] intersects its fast quorum with a recovery majority in at least `floor((f + 1) / 2)` replicas, but this minimum evidence is not always sufficient for count-only recovery.
 - [[Avicenna]] restricts a normal phase to `f + 2` non-standbys, so a commit set of `f + 1` intersects any two non-standby rotation logs; Armageddon phases revert to majority/majority intersection over `2f + 1` replicas.
 - [[Bodega]] uses ordinary majority intersection for three distinct obligations: one stable roster, same-ballot responder coverage, and transfer of older committed writes through grantor catch-up thresholds.
+- [[Hermes]] has no data-path quorum-intersection argument: a write/replay uses every member of the current live set. Majority intersection belongs to the external RM update; leases and epochs prevent old/new memberships from serving concurrently.
 - [[Jetpack]] intersects a same-view fast superquorum `f + ceil(f/2) + 1` with a recovery majority `f + 1` in at least `ceil(f/2) + 1` replicas; this is both its recovery threshold and the reason cross-view acknowledgements cannot be combined.
 - [[FPaxos]] removes all same-phase intersection obligations: only every valid Phase 1 quorum intersecting every valid Phase 2 quorum is required for ordinary Paxos agreement.
 - [[Hydra]] does not define one global consensus quorum. Sequencer addition/removal collects one application-defined quorum from every receiver group; [[HydraPaxos]] separately uses `f + 1` consistent replies among `2f + 1` replicas, including its leader.

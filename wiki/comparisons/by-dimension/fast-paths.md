@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fast paths
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
 tags: [fast-path]
 ---
 
@@ -24,6 +24,7 @@ tags: [fast-path]
 | [[Rabia]] | Weak-MVC terminates after Proposal/State/vote exchanges | All replicas have same proposal, or no proposal has a majority | Binary agreement returns one request or `⊥` for the slot | Stable networks keep PQ heads aligned and reduce `⊥` slots | Count fast path as three message delays; weak validity permits `⊥` | [[Rabia-2021]] |
 
 | [[CURP]] | Client records request at all witnesses while master speculatively executes | Operation is commutative with all unsynced operations and all `f` witnesses accept | Recovery can replay from any one selected witness without changing visible results | Conflicts or witness failures fall back to backup sync | Model fast evidence as unordered durability, not as ordered consensus acceptance | [[CURP-2019]] |
+| [[Hermes]] | Local `Valid` reads and `INV -> ACK` client-visible writes from any replica; `VAL` follows off path | Every current live member acknowledges the timestamp; RM epoch is stable | All authorized readers are invalidated before completion, and replay can reproduce the exact write | Message loss replays; member failure waits for RM; ordinary conflicts do not cause fallback | Boundary case: fast normal path, but no smaller fast quorum or conflict slow path | [[Hermes-2020]], §§3.1-3.4 |
 | [[Copilot]] | Pilot fast-commits an initial cross-log dependency after `f + floor((f + 1) / 2)` compatible `FastAcceptOk` replies | Replicas have not accepted an incompatible later entry from the other pilot; ping-pong batching usually aligns proposals | Initial dependency is recoverable, with ambiguous partial evidence resolved through the other log | Incompatibility or insufficient fast replies triggers majority Accept; slow pilot work can be taken over | Separate fast commit from execution readiness and from takeover of unresolved predecessors | [[Copilot-2020]], §§3.2–3.4 |
 | [[Avicenna]] | Ordinary real-leader `Accept`/`AcceptOK` normal path; independent sampled shadow processing | Stable live real leader and `f + 1` responsive non-standbys | Single leader assigns one value per index; shadow log never executes | Slow real leader or stopped commits trigger phase rotation, not a conflict slow path | Do not classify the two-message-delay Multi-Paxos normal path or fast rotation as a Fast Paxos-style fast quorum | [[Avicenna-2026]], §§4.1, 4.3 |
 | [[Bodega]] | One-server local read at a stable, caught-up key responder; optional `m` `AcceptNote`s release a read before Commit arrives | Majority roster leases, threshold catch-up, responder-covering writes, and newest key write committed or inevitably committing | Local response observes every prior acknowledged write without changing write consensus | Uncertain reads hold or redirect; failed responders require higher-roster lease revocation/expiration | This is a client-read fast path, not a Fast Paxos-style value-selection path | [[Bodega-2026]], §§3.2-3.3, 4.3 |
@@ -53,6 +54,8 @@ Summary: [[FastPaxos]] is a fast single-value consensus mechanism; [[GPaxos]] ge
 [[Rabia]] is a different fast-path shape: it does not make a two-delay Paxos-style decision. Its common case is three message delays, and the fast decision may be `⊥` when replicas do not observe a majority proposal.
 
 [[CURP]] is another boundary case: its 1 RTT path is not a consensus fast quorum, but unordered witness durability combined with master-side speculative execution and commutativity.
+
+[[Hermes]] is a write-all boundary case. Its one-exposed-RTT write is the normal `INV -> ACK` path over every live member, not an optimistic subset. Conflict never selects a slow path for ordinary writes; only failures, invalid states, and RMW races change behavior.
 
 [[Copilot]] is a dual-leader dependency case: its fast evidence concerns one cross-log prefix dependency per entry, while its no-slowdown fast-path rate is improved by ping-pong batching rather than application commutativity.
 

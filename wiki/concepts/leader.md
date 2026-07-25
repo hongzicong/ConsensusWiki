@@ -4,6 +4,8 @@ A [[leader]] or coordinator chooses rounds, ballots, or proposals. Protocols dif
 
 [[Atlas]] has no distinguished leader. Each command has an initial coordinator, and recovery may be performed by another process.
 
+[[Hermes]] has no fixed data-path leader. Any operational replica may coordinate a write, and any replica left with an invalid key may replay the original timestamp/value as a temporary coordinator. The external RM service, not a write leader, controls membership epochs.
+
 [[PigPaxos]] keeps a stable Multi-Paxos leader for ordering and decisions, but rotates relay followers underneath it to reduce fan-out/fan-in load. Relays are not leaders and do not choose values.
 
 [[Rabia]] has no leader or command leader in the core protocol. Every replica participates in Weak-MVC for every slot, and failure handling is inside the randomized consensus protocol.
@@ -23,5 +25,5 @@ A [[leader]] or coordinator chooses rounds, ballots, or proposals. Protocols dif
 [[WPaxos]] assigns leadership per object. Every node may own different objects concurrently; a candidate changes only one object's owner by running Phase 1 with a higher per-object ballot. This avoids both one global leader and fully opportunistic per-command leadership.
 
 ## Related pages
-[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[Copilot]], [[Bodega]], [[Jetpack]], [[partial-connectivity]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
+[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[partial-connectivity]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
 

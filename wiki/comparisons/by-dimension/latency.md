@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: latency
-protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
+protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Hermes, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
 tags: [latency, fast-path, slow-path, contention, stable-run]
 ---
 
@@ -38,6 +38,7 @@ Sequential latency measures an unloaded service. Conflict-free latency measures 
 | [[EPaxos]] | `2δ+1` | `2δ+1` | `2δ+1` | `O(nδ)` | [[SwiftPaxos-2024]], Table 1 |
 | [[CURP]] + N²Paxos | `2δ` | `2δ` | `3δ+1` | `3δ+1` | [[SwiftPaxos-2024]], Table 1 |
 | [[SwiftPaxos]] | `2δ` | `2δ` | `2δ` | `3δ` | [[SwiftPaxos-2024]], Table 1 and Proposition 11 |
+| [[Hermes]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Hermes-2020]] gives a per-key local-read/write-all RTT model, not this SMR command-concurrency table |
 | [[Copilot]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Copilot-2020]] uses a different slowdown-focused empirical metric |
 | [[Avicenna]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Avicenna-2026]] proves/evaluates a Multi-Paxos-shaped normal path and fail-slow counterfactual metric, not this four-class table |
 | [[Bodega]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[Bodega-2026]] gives a separate read/write/interference latency model, not this command-concurrency table |
@@ -69,7 +70,22 @@ The source table merges adjacent cells with the same value; the values are expan
 - [[Jetpack]] states 1 client RTT for successful conflict-free fast commitment and otherwise inherits host latency. That does not uniquely determine these four `δ` classes across every compatible host.
 - [[FPaxos]] retains the Paxos phase/message shape. Smaller or better-placed `Q2` can lower measured steady-state latency, but the exact `δ` row depends on the surrounding Multi-Paxos client/leader path and is not given by the source.
 - [[OmniPaxos]] reports stable Sequence Paxos replication and partial-partition recovery using different metrics. These results cannot be converted into the SwiftPaxos four-class `δ` table without specifying client placement and response semantics.
+- [[Hermes]] reports replica and external-client RTTs for single-key replication, not the table's SMR execution metric. Its cells therefore remain `Unclear`; its native latency model is recorded separately below.
 - General latency assumes the system is already stable. It excludes leader election, recovery before stabilization, and the unbounded delays possible in a fully asynchronous run.
+
+## Hermes per-key latency model
+
+[[Hermes-2020]], §§3.1, 3.3, and 8 distinguish protocol completion from exposed response:
+
+```text
+failure-free replica sequence: INV -> ACK -> VAL = 1.5 RTT
+coordinator-exposed write latency: 1 RTT
+local Valid read: 0 inter-replica messages
+external-client baseline write: 2 RTT
+external-client write with ACKs copied to client: 1.5 RTT
+```
+
+Optimization O3 broadcasts ACKs to every replica, reducing follower same-key read blocking from up to one RTT to half a round trip and removing separate `VAL` messages. Failure, message loss, or an invalid local state adds replay or RM delay; ordinary write conflicts do not add a separate fallback round.
 
 ## Bodega read-oriented latency model
 

@@ -16,6 +16,7 @@ Examples:
 - [[SwiftPaxos]] uses matching FastAck dependency evidence, with SlowAck fallback.
 - [[Rabia]] can terminate Weak-MVC in three message delays; the fast outcome may be a request or a forfeited `⊥` slot.
 - [[CURP]] can complete primary-backup updates in 1 RTT when all witnesses durably record the request and the master can safely execute it speculatively.
+- [[Hermes]] exposes one replica RTT for a failure-free write after every live follower acknowledges the invalidation; its later validation is off the client critical path.
 - [[Copilot]] can fast-commit an initial cross-log dependency after `f + floor((f + 1) / 2)` compatible `FastAcceptOk` replies including the proposing pilot.
 
 For formal modeling, define the fast path by its commit predicate and recovery obligation: if something fast-commits, every later recovery quorum must contain enough evidence to preserve the same decision or compatible metadata.
@@ -25,6 +26,8 @@ For formal modeling, define the fast path by its commit predicate and recovery o
 [[GPaxos]] is a positive fast-path example: in a fast ballot, proposers send directly to acceptors and learners can learn in two message delays when a quorum reports compatible c-structs containing the proposed command.
 
 [[CURP]] is a useful boundary case: it has a true 1 RTT fast path, but the evidence is unordered witness durability plus commutativity, not an ordered consensus quorum.
+
+[[Hermes]] is another boundary case. Its one-RTT route is the normal write-all path, not a smaller optimistic quorum, and ordinary conflicts do not cause fallback. Failures instead trigger retransmission, replay, or leased membership change.
 
 [[Copilot]] shows why fast evidence and recovery evidence must be modeled together. A recovery majority may see only `floor((f + 1) / 2)` fast accepts from a committed fast quorum; in the ambiguous count range, safe recovery also examines the other pilot's log.
 
@@ -41,4 +44,4 @@ For formal modeling, define the fast path by its commit predicate and recovery o
 [[WPaxos]] is another non-example: after [[object-stealing]] establishes a stable owner, repeated local Phase 2 lowers WAN latency, but the owner remains on the path and no separate fast quorum or conflict-dependent predicate exists.
 
 ## Related pages
-[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Copilot]], [[Bodega]], [[Jetpack]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
+[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]

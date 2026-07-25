@@ -6,6 +6,8 @@ In [[GPaxos]], conflict means incompatible c-struct evidence rather than merely 
 
 [[CURP]] treats non-commutativity among unsynced operations as the conflict condition. Witnesses reject non-commuting records, and the master syncs to backups before replying when a new operation depends on an unsynced one.
 
+[[Hermes]] orders concurrent same-key writes with lexicographic `[version, cid]` timestamps. Ordinary writes never abort and each replica resolves them locally in the same order. RMWs have stricter semantics: writes receive a larger version increment and outrank racing RMWs, while only the highest-timestamp concurrent RMW commits.
+
 [[Copilot]] does not use application commutativity. Its conflict is an incompatible pair of cross-log dependencies that would leave two entries unordered relative to one another. Replicas reject the initial dependency and suggest a later prefix; the regular path may create a deterministic cycle that all replicas order using fixed pilot priority.
 
 [[Jetpack]] delegates `Conflict(c1, c2)` to the application and requires it to report whenever command order can change state or response. A shim checks each fast command against all in-flight commands from both paths; any detected conflict falls back to host ordering.
@@ -13,4 +15,4 @@ In [[GPaxos]], conflict means incompatible c-struct evidence rather than merely 
 [[WPaxos]] partitions conflict by object. Commands on different objects have independent owners/logs and need no mutual order; same-object commands share one ballot/slot sequence. Concurrent attempts to steal the same object are leadership conflicts resolved by higher unique ballots and randomized backoff.
 
 ## Related pages
-[[FastPaxos]], [[GPaxos]], [[EPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[CURP]], [[Copilot]], [[Jetpack]], [[WPaxos]], [[object-stealing]], [[command-structure]]
+[[FastPaxos]], [[GPaxos]], [[EPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[CURP]], [[Hermes]], [[Copilot]], [[Jetpack]], [[WPaxos]], [[object-stealing]], [[command-structure]]

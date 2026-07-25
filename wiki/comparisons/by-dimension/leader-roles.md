@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: leader roles
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
 tags: [leader]
 ---
 
@@ -21,6 +21,7 @@ tags: [leader]
 | [[Pando]] | Delegate/leader used for Phase 2 or conflict fallback | Reads can avoid leader; writes may partially delegate | [[Pando-2020]] |
 | [[Rabia]] | No leader or command leader | All replicas participate symmetrically in Weak-MVC | [[Rabia-2021]] |
 | [[CURP]] | Strong master serializes and executes updates; witnesses do not order | Master remains on execution path, but clients bypass backup sync by recording unordered durability at witnesses | [[CURP-2019]] |
+| [[Hermes]] | No fixed data-path leader; any operational replica coordinates one update and any invalid replica may coordinate replay | Coordinator remains on that update's ACK collection path, but leadership is per operation and writes to different keys proceed independently | [[Hermes-2020]], §3 |
 | [[Copilot]] | Two distinguished replicas each own a separate log and redundantly order/execute every command | Both pilots run independent fast paths; either can take over specific blocking entries from the other log | [[Copilot-2020]] |
 | [[Avicenna]] | One real leader orders executable commands; the deterministic next leader is shadow leader; roles rotate by phase | Real leader remains on the normal commit path; shadow processing is independent and becomes authoritative only after safe rotation | [[Avicenna-2026]] |
 | [[Bodega]] | One ballot leader orders writes; the roster additionally assigns arbitrary per-key read responders, with the leader implicit for all keys | Local reads bypass the leader at stable/caught-up responders; writes still traverse the leader and cover responders | [[Bodega-2026]] |

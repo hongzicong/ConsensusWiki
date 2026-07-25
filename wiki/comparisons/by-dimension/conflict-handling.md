@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: conflict handling
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
 tags: [conflict]
 ---
 
@@ -21,6 +21,7 @@ tags: [conflict]
 | [[Pando]] | Concurrent writes/proposals for a version | Higher proposal numbers recover chosen values; fallback leader |
 | [[Rabia]] | Replicas propose different oldest pending requests for a slot | If no majority proposal is visible, decide `⊥`, requeue the request, and try later |
 | [[CURP]] | Non-commuting operations among unsynced master operations or witness records | Witness rejects or master syncs to backups before replying; only mutually commutative unsynced requests can be replayed unordered |
+| [[Hermes]] | Concurrent same-key updates may begin from the same version at different coordinators | Lexicographic `[version, cid]` gives one endpoint order; ordinary writes never abort, writes outrank racing RMWs, and only the highest concurrent RMW commits |
 | [[Copilot]] | Cross-log dependencies are incompatible if neither entry is ordered after the other, which could yield different combined orders | Replica rejects the initial dependency and suggests a later prefix; regular Accept persists the selected dependency; deterministic pilot priority orders cycles |
 | [[Avicenna]] | Different real-log commands at one index can arise only across phases; shadow order may differ but is never executable | Preserve committed evidence during merge; otherwise choose the highest-phase accepted command; one real leader prevents same-phase collisions |
 | [[Bodega]] | A local read overlaps an in-flight write to the same key and cannot yet know whether the local accepted value will commit | Hold the read until Commit or `m` early accept notifications; client timeout duplicates it at another responder/leader |

@@ -10,6 +10,8 @@ Linearizability gives each operation a single point between invocation and respo
 
 [[CURP]] preserves primary-backup linearizability while replying before backup sync. Its proof relies on witness durability for completed unsynced operations, master-side sync before non-commuting dependent observations, and exactly-once duplicate filtering during replay.
 
+[[Hermes]] makes local readability explicit: a key may answer only in `Valid`. Before a write completes, every current live member has acknowledged that timestamp or already holds a higher one; exact-match `VAL` handling prevents stale validation. Lexicographic per-key timestamps order concurrent writes, and replay reuses the original timestamp/value.
+
 [[Copilot]] proves real-time order across its two logs with dependency compatibility: after command `a` completes at `P.i`, a later command `b` in the other log cannot commit with a dependency before `P.i`. Per-log agreement, cross-log orientation, deterministic cycle priority, and `(cliid, cid)` deduplication then give one total client-operation order.
 
 [[Avicenna]] proves that a command committed at real-log index `k` remains at `k` in every later phase. This committed-prefix invariant gives a common total execution order. If `a` completes before `b` is proposed, the later real leader already preserves the committed prefix containing `a`, so it assigns `b` a later index. The shadow log is irrelevant to linearizability because it is never executed.
@@ -23,4 +25,4 @@ Linearizability gives each operation a single point between invocation and respo
 [[WPaxos]] provides per-object linearizability, not one global total order. Each object's commands execute by increasing slot under one ballot owner at a time; different object logs may advance independently. Multi-object atomicity is outside the basic algorithm.
 
 ## Related pages
-[[PigPaxos]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[CURP]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[roster-lease]], [[view-change-hazard]], [[agreement]], [[recovery]], [[quorum]]
+[[PigPaxos]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[invalidation]], [[reliable-membership]], [[roster-lease]], [[view-change-hazard]], [[agreement]], [[recovery]], [[quorum]]

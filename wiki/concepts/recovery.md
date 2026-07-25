@@ -14,6 +14,8 @@
 
 [[CURP]] recovers by restoring an ordered backup prefix, then replaying requests from one selected witness. The single-witness rule matters: different witnesses may have accepted different request sets, but each individual witness set is mutually commutative.
 
+[[Hermes]] does not select a new value during key recovery. Every invalidation already carries the value and a globally ordered per-key timestamp, so any invalid replica can rebroadcast the original pair, gather all current-live acknowledgments, and validate it. [[reliable-membership]] recovery is separate and fences old epochs before changing the write-all set.
+
 [[Copilot]] recovers a blocking entry in the other pilot's log with a higher-ballot Prepare/Accept. A count in `[floor((f + 1) / 2), f)` fast-accepted replies is ambiguous, so the recoverer examines the first possibly incompatible entry in the other log. This is a cross-instance recovery dependency, not ordinary max-ballot Paxos selection.
 
 [[Bodega]] keeps ordinary Paxos value recovery. Its additional recovery problem is metadata authority: a higher-ballot roster must revoke or expire old leases, establish new guarded leases, and make new responders catch up through majority-reported acceptance thresholds before they serve local reads.
@@ -29,5 +31,5 @@
 [[WPaxos]] makes recovery and placement the same Phase 1 action. A higher per-object ballot gathers a wide `Q1` that intersects every prior local `Q2`; the new owner must finish accepted uncommitted slots before opening later slots. The paper's displayed `1b` omits the full accepted-value payload, so exact selection remains Unclear.
 
 ## Related pages
-[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Copilot]], [[Bodega]], [[Jetpack]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
+[[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
 
