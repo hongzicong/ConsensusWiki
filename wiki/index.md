@@ -101,7 +101,6 @@
 ## Proof notes
 - [[quorum-intersection]] - Intersection obligations.
 - [[adopt-commit-abstraction]] - Fast-evidence abstraction.
-- [[rocq-modeling-notes]] - Rocq/Coq modeling reminders.
 
 ## Open questions
 - [[new-protocol-ideas]] - 100 defect-driven SMR candidates with evidence clusters, a ranked shortlist, red-team attacks, and next proof/model artifacts.

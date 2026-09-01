@@ -157,4 +157,3 @@ Rules 1-4 ensure that a client request sent to a correct server eventually commi
 - [[commit-rules]]
 - [[recovery-rules]]
 - [[timing-assumptions]]
-- [[rocq-modeling-notes]]
