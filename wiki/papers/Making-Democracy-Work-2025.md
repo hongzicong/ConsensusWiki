@@ -4,7 +4,7 @@ title: Making Democracy Work: Fixing and Simplifying Egalitarian Paxos (Extended
 authors: Fedor Ryabinin, Alexey Gotsman, Pierre Sutra
 year: 2025
 venue: OPODIS 2025 / arXiv extended version
-source: raw/epaxos_plus.pdf
+source: raw/epaxos_star.pdf
 protocols: [EPaxosStar]
 tags: [paxos, leaderless, dependencies, fast-path, recovery, lower-bound]
 status: ingested
