@@ -9,7 +9,7 @@ The goal is to make consensus papers easier to understand, compare, and formaliz
 - Understand distributed consensus papers.
 - Extract protocol mechanisms, message flows, quorum rules, commit rules, and recovery rules.
 - Compare protocols across technical dimensions such as quorum systems, fast paths, leader roles, conflict handling, recovery, and proof techniques.
-- Prepare material for Rocq/Coq, TLA+, or other formal models.
+- Prepare material for Lean, TLA+, or other formal models.
 - Collect open questions and ideas for new consensus protocols.
 
 ## Repository Layout
