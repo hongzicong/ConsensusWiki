@@ -1,7 +1,7 @@
 # ConsensusWiki Index
 
 ## Papers
-- [[FastPaxos-2006]] - Fast Paxos fast rounds and quorum requirements.
+- [[FastPaxos-2006]] - Fast rounds, Figure 2 safe-value selection, classic-round recovery, and fixed versus cardinality-based quorum requirements.
 - [[Generalized-Paxos-2005]] - Generalized Paxos over c-structs, enabling fast learning of compatible concurrent commands.
 - [[EPaxos-2013]] - Leaderless dependency-based Paxos for geo-replicated SMR.
 - [[EPaxos-Revisited-2021]] - Reevaluation of EPaxos conflict behavior, tail latency, and clock-based mitigation.
@@ -10,7 +10,7 @@
 - [[PigPaxos-2021]] - Multi-Paxos communication-overlay protocol using randomized relay aggregation.
 - [[Atlas-2020]] - Leaderless planet-scale SMR with fast quorum `floor(n/2) + f` and recoverable dependency unions.
 - [[Pando-2020]] - Erasure-coded geo-storage with Phase 1a/1b/2 quorums.
-- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums and optimized read-only execution at fast-quorum replicas.
+- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums, optimized reads, and the FastPaxos+ evaluation-baseline mapping.
 - [[Rabia-2021]] - Randomized leaderless SMR using Weak-MVC and forfeited `⊥` slots.
 - [[CURP-2019]] - Primary-backup fast replication using commutative unordered witness durability.
 - [[Copilot-2020]] - Dual-pilot SMR that preserves normal latency despite one slow replica.
