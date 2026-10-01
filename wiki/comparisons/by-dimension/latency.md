@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: latency
-protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Hermes, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
+protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Hermes, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos, KCensus]
 tags: [latency, fast-path, slow-path, contention, stable-run]
 ---
 
@@ -30,6 +30,7 @@ Sequential latency measures an unloaded service. Conflict-free latency measures 
 
 | Protocol | Sequential | Conflict-free | Contention-free | General | Source |
 |---|---:|---:|---:|---:|---|
+| [[KCensus]] | `Unclear` | `Unclear` | `Unclear` | `Unclear` | [[KCensus-2026]] optimizes weighted single-proposer latency in a stable measured topology, not this four-class `δ` metric |
 | Paxos | `4δ` | `4δ` | `4δ` | `4δ` | [[SwiftPaxos-2024]], Table 1 |
 | N²Paxos | `3δ+1` | `3δ+1` | `3δ+1` | `3δ+1` | [[SwiftPaxos-2024]], Table 1 |
 | [[Mencius]] | `2δ+1` | `4δ+1` | `4δ+1` | `4δ+1` | [[SwiftPaxos-2024]], Table 1 |
@@ -147,6 +148,12 @@ See [[new-protocol-ideas]] for the focused latency roadmap and proof obligations
 - Extend the matrix to [[Atlas]], [[EPaxosStar]], [[PigPaxos]], [[Rabia]], and standalone [[CURP]] without mixing decision, commit, execution, and response latency.
 - Determine how execution dependencies change end-to-end latency when a command is committed but not yet executable.
 - Prove or refute a `2δ` stable-general lower bound under an explicit client, quorum, failure, and response model.
+
+## KCensus objective and empirical limits
+
+[[KCensus-2026]], §5.2 and Appendix B, optimize a weighted mean/percentile of proposal-to-decision time over single-correct-proposer executions, with fixed known link latencies and accurate crash detection in the stable state. This does not supply the four workload-class bounds above. KSMR reports mostly one-round-trip fast commits (§6), but topology, evidence routes, execution delegation, and queueing matter.
+
+Its default seven-replica experiments reduce mean latency by 9–15% across four deployments; the maximum 16% is in the scalability study. The limit is visible under contention: in NH with Zipf 0.99 and 50/50 reads/writes, write mean/p99 is 158/385 ms versus SwiftPaxos 146/209 ms (§§7.1, 7.3, 7.5). These are source-paper results with reimplemented baselines, not measurements in this repository.
 
 ## Related pages
 

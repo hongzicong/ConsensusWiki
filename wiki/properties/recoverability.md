@@ -30,5 +30,9 @@ Recoverability is the ability to reconstruct a safe value/metadata state from qu
 
 [[WPaxos]] relies on a wide per-object `Q1` intersecting every prior `Q2` so a new owner can recover accepted unfinished slots. The prose states this obligation, but the displayed `1b` payload lacks explicit accepted values; formal recovery should retain this as an unresolved artifact-level detail.
 
+## KCensus distinguishability condition
+
+[[KCensus-2026]], §3.1, states that reachable states containing different committed values must differ in local state at more than `f` processes; otherwise crashing the differing processes leaves survivors unable to distinguish the required outcomes. Its acceptance-based template realizes this through valid, compatible [[knowledge-requirement]] objects and a frozen `n-f` census. This is stronger than mere pairwise fast-quorum overlap and is separate from practical sustained throughput recovery after faults. See [[knowledge-census-recovery]] for the proof scope.
+
 ## Related pages
 [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[PigPaxos]], [[Atlas]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[agreement]], [[recovery]], [[quorum]]

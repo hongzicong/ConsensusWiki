@@ -1,7 +1,7 @@
 ---
 type: comparison-family
 family: fast consensus
-protocols: [FastPaxos, GPaxos, EPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Jetpack]
+protocols: [FastPaxos, GPaxos, EPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Copilot, Jetpack, KCensus]
 tags: [fast-path]
 ---
 
@@ -27,3 +27,7 @@ A fast path succeeds only when evidence is strong enough for later recovery: sam
 Define the fast evidence predicate before modeling optimizations.
 
 [[Atlas]] is a useful reminder that "unambiguous" need not mean identical replies. Its fast path permits differing dependency reports when every dependency in the final union is reported by at least `f` fast-quorum members.
+
+## Synthesized evidence strategies
+
+[[KCensus]] makes the recoverability evidence itself a synthesis variable: each proposer has a [[knowledge-requirement]], pairs must retain more than `f` witnesses of intersection acceptances, and an `n-f` frozen census supplies safe fallback inputs. It can choose different dissemination patterns by topology and objective. Unlike a fixed larger-quorum recipe, membership cardinality alone cannot validate a strategy. Its stable single-proposer optimality theorem does not promise the best conflict/recovery latency ([[KCensus-2026]], §§3–5, Appendix B).

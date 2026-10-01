@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fast paths
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [fast-path]
 ---
 
@@ -10,6 +10,7 @@ tags: [fast-path]
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | Proposer learns that every required witness recorded its required acceptances | Fixed valid and pairwise-compatible requirements; sufficient same-value evidence | Evidence survives through any `n-f` frozen census | Conflict or suspicion triggers adoption; topology affects latency | No universal one-RTT or size-only fast predicate | [[KCensus-2026]], §§4–5 |
 | [[FastPaxos]] | Acceptors vote after `phase2a any` | No collision for two-delay learn | Collision recovery must pick safe value | Frequent collisions hurt progress | Model `any` separately | [[FastPaxos-2006]] |
 | [[FPaxos]] | Ordinary stable-leader Phase 2 over a smaller or structured `Q2` | Every valid recovery `Q1` intersects every valid deciding `Q2` | Keeps Paxos agreement while permitting same-phase disjoint quorums | Smaller `Q2` can improve common latency/load but larger `Q1` makes leader recovery harder | This is not a leader-bypassing fast round or fewer-message-delay path | [[Flexible-Paxos-2016]], §§3-5 |
 | [[OmniPaxos]] | Stable Sequence Paxos Accept phase pipelines commands through one leader-to-majority round trip | Prepared QC leader and promised majority | Ordinary majority acceptance preserves a growing prefix | Partial connectivity is handled by BLE/Prepare rather than a second commit predicate | Non-example: pipelined common path, not a fast quorum or leader bypass | [[Omni-Paxos-2023]], §§4.1.2, 7.1 |

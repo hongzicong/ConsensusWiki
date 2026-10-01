@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: proof techniques
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [proof]
 ---
 
@@ -9,6 +9,7 @@ tags: [proof]
 
 | Protocol | Main proof object | Key invariant |
 |---|---|---|
+| [[KCensus]] | Value-specific first/second-order evidence, frozen census, and causal indistinguishability | Single acceptance and monotone truthful evidence make every census preserve a committed value; stable-network lower bound constrains synthesis ([[KCensus-2026]], Appendices A–C; [[knowledge-census-recovery]]) |
 | [[FastPaxos]] | Round/value votes | Higher rounds cannot choose incompatible lower possible choices |
 | [[FPaxos]] | Phase-indexed quorum families, persistent promises, and accepted ballot/value | If `v` is decided at `p`, every later proposal carries `v`; one cross-phase acceptor suffices for the induction |
 | [[OmniPaxos]] | Whole-log sequences, accepted rounds, majority promises, and QC ballots | Paxos P2/P2c become prefix extension; SC3 induction plus quorum intersection proves SC2; BLE proves LE1-LE3 separately |

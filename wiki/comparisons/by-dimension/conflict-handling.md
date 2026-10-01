@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: conflict handling
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [conflict]
 ---
 
@@ -9,6 +9,7 @@ tags: [conflict]
 
 | Protocol | Conflict meaning | Resolution |
 |---|---|---|
+| [[KCensus]] | Different values reach one slot; acceptance remains immutable | Disseminate `DoAdopt`, freeze a census, adopt safely, then run Paxos; sharding separates non-interfering commands; retry losing commands in later slots ([[KCensus-2026]], §§4, 6) |
 | [[FastPaxos]] | Concurrent proposals accepted in a fast round | Collision recovery chooses a safe value |
 | [[FPaxos]] | Different proposers race with distinct proposal numbers, possibly using disjoint Phase 2 quorums | Cross-phase acceptor either blocks the lower ballot after a higher promise or reports the earlier accepted value so the higher proposer adopts it |
 | [[OmniPaxos]] | Client commands are serialized by one Sequence Paxos leader; competing leaders use different ballots and may leave divergent unchosen suffixes | Higher-ballot Prepare adopts the highest accepted log from a majority, preserves chosen prefixes, and overwrites only unchosen suffixes during `AcceptSync` |

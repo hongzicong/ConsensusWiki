@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: recovery rules
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [recovery]
 ---
 
@@ -10,6 +10,7 @@ tags: [recovery]
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | Freeze `n-f` voters; rule out candidates using other-value acceptors and missing witness evidence | Immutable acceptance, frozen evidence, fixed compatible requirements | Preserves any fast commit and eliminates conflicting candidates | Any proposer may collect census then invoke fallback consensus | Adoption is not decision; test indirect acceptor evidence as well as respondent state | [[KCensus-2026]], §4.4, Algorithm 6 |
 | [[FastPaxos]] | Higher round chooses pickable safe value | Phase 1 evidence from quorum | Preserves possible lower chosen value | Stable coordinator helps | Encode pickable predicate | [[FastPaxos-2006]] |
 | [[FPaxos]] | Ordinary higher-ballot Phase 1 over a valid `Q1`; propose highest accepted value returned | Every valid `Q1` intersects every earlier valid `Q2` | Preserves any value that could already be decided without requiring same-phase intersections | Recovery may be unavailable while current leader could still replicate through smaller `Q2` | Dynamic `Q2` selection is safe only if later `Q1` knows which lower quorums to intersect | [[Flexible-Paxos-2016]], §§3, 5, 7 |
 | [[OmniPaxos]] | BLE may elect a stale QC server; Sequence Paxos gathers a majority, selects highest `acceptedRnd` then longest `logIdx`, and sends `AcceptSync` | Persistent ballots/log state, majority intersection, FIFO session, and partial synchrony for election | Preserves every chosen prefix while allowing unchosen suffixes to be overwritten | A recovered server or link sends `PrepareReq`; one QC server can restore leadership | Model election recovery, log adoption, follower resync, and reconfiguration migration separately | [[Omni-Paxos-2023]], §§4.1.1, 4.1.3, 5 |

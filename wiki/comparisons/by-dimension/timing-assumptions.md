@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: timing assumptions
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [timing, liveness]
 ---
 
@@ -16,6 +16,7 @@ A model that bakes timing into safety can prove the wrong theorem, while a model
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | Async evidence safety; failure-detector adoption; partial-synchronous SMR | Optimality additionally assumes fixed known latencies, permanent crashes, and accurate detection in stable single-proposer runs | False suspicion safely forces adoption | Eventual suspicion releases failed requirements; fallback must terminate | Keep optimization assumptions separate from safety and arbitrary-load performance | [[KCensus-2026]], §2.3, §5.2, Appendix B |
 | [[FastPaxos]] | Fast and classic rounds | Asynchronous safety; progress needs favorable conditions/coordinator recovery | Safety is quorum-based, not timing-based | Collisions and failures require eventual recovery progress | Keep safety invariant independent of timers | [[FastPaxos-2006]] |
 | [[FPaxos]] | Stable-leader Phase 2 over a selected quorum; Phase 1 on election/recovery | Asynchronous safety; additional synchrony/stable proposer assumptions for progress | Safety depends only on persistent promises and cross-phase intersection | Smaller targeted `Q2` can reduce latency, but slow/failing selected members cause retransmission; leader loss requires available `Q1` | Do not convert performance gains into fewer protocol phases or synchronous safety | [[Flexible-Paxos-2016]], §§2-6 |
 | [[OmniPaxos]] | Periodic BLE heartbeats elect a QC ballot; Sequence Paxos then prepares and pipelines | Partial synchrony; eventually a heartbeat duration `T_delay` has no late connected replies | Sequence safety is ballot/quorum based; suffix optimization additionally assumes FIFO sessions | Stable periods let QC status converge and one QC server complete election/Prepare | Ignore late heartbeats for the old round; do not infer failure from missing links alone | [[Omni-Paxos-2023]], §§3, 5.2 |

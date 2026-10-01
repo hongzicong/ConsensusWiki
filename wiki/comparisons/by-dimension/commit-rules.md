@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: commit rules
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [commit-rule, quorum, fast-path, recovery]
 ---
 
@@ -16,6 +16,7 @@ Commit predicates are the bridge between protocol message evidence and [[agreeme
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | `accepted = v` and every `R_p[q]` is contained in the proposer's view of `q`'s evidence | Requirements passed validity/compatibility checks | Local second-order evidence implies recoverable fast commitment | Otherwise adopt a safe value and decide through fallback | Separate commit, adoption, fallback decision, and client execution | [[KCensus-2026]], Algorithms 4, 6–7; §6 |
 | [[FastPaxos]] | A value is chosen in a round when a quorum for that round accepts it; fast rounds use fast quorums | Fast-round collision-free common case, with recovery after collisions | Later rounds must select a value safe with respect to possibly chosen lower-round values | Progress needs a coordinator/recovery path after collision | Model `any` and the safe phase-2a value predicate separately | [[FastPaxos-2006]] |
 | [[FPaxos]] | Value decided after every acceptor in one valid Phase 2 quorum accepts `(proposal, value)` | Chosen `Q2` belongs to a family intersecting every valid `Q1`; no majority or same-phase intersection required | Any later Phase 1 can discover and preserve the decision | Smaller `Q2` improves stable-leader progress but may enlarge recovery `Q1` | Commit predicate is ordinary Paxos acceptance with different quorum geometry, not a fast round | [[Flexible-Paxos-2016]], §§3, 5 |
 | [[OmniPaxos]] | An index is chosen after a majority accepts it; leader advances `decidedIdx` and broadcasts `Decide`; the preceding prefix is decided too | Fixed configuration, FIFO replication order, and a prepared leader | Later Prepare adopts a log containing every chosen prefix | Stable leader pipelines entries; `SS` ends further decisions in the old configuration | Separate accepted, chosen, leader-observed decided, and follower-learned decided states | [[Omni-Paxos-2023]], §§4.1-4.2, 6 |

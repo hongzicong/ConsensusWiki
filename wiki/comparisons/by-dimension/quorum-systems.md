@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: quorum systems
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [quorum]
 ---
 
@@ -16,6 +16,7 @@ Every fast path here buys latency by strengthening quorum intersections or metad
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | Per-proposer witness/acceptor requirements, not cardinality alone | `n ≥ 2f+1`; `\|Q_p\| > f`; pairwise `\|W_p ∪ W_q\| > f`; census `n-f` | Each census intersects the distinguishing-witness set | Missing required evidence triggers adoption then Paxos fallback | Count distinct witnesses; non-voting clients never contribute | [[KCensus-2026]], §§3–4 |
 | [[FastPaxos]] | Classic and fast quorums | Any two quorums intersect; fast rounds require intersection of one arbitrary quorum with two fast quorums | Prevents two fast values surviving recovery | Fast progress needs nonfaulty fast quorum | Model `Quorum(i)` by round | [[FastPaxos-2006]] |
 | [[FPaxos]] | Separate Phase 1 and Phase 2 quorum families; only cross-phase pairs must intersect | General: every `Q1` intersects every `Q2`; simple thresholds: `\|Q1\| + \|Q2\| > N` | Later Phase 1 sees evidence from every earlier deciding Phase 2 quorum | Stable leader needs `Q2`; leader replacement needs `Q1` and `Q2`; structured availability depends on placement | Never assume `Q1-Q1` or `Q2-Q2` intersection; record phase and family membership | [[Flexible-Paxos-2016]], §§3-5 |
 | [[OmniPaxos]] | Fixed majorities for BLE observation, Prepare/log adoption, and Accept/decision | QC server is directly linked to at least a majority of correct servers; at least one QC server is the progress threshold | Prepare majority intersects every earlier deciding majority and carries the chosen prefix | One QC server can lead even if its followers are not mutually connected | Distinguish a majority of heartbeat replies, a QC center, and a fully connected majority | [[Omni-Paxos-2023]], §§3-5 |
@@ -45,6 +46,7 @@ Fast paths need either larger quorums, leader inclusion, identical metadata, or 
 ## Fast quorum sizes
 | Protocol | Common configuration | Fast quorum size |
 |---|---|---|
+| [[KCensus]] | `n ≥ 2f+1` voting processes | proposer-specific `Q_p` with `\|Q_p\| > f` and `\|W_p ∪ W_q\| > f` for each pair; recovery `n-f`; no universal size-only fast quorum |
 | [[FastPaxos]] | `N = 3f + 1` acceptors | `2f + 1`; more generally, with fast quorum size `N - E` |
 | [[GPaxos]] | `N` acceptors | either classic and fast quorums both `floor(2N/3) + 1`, or classic `floor(N/2) + 1` with fast `ceil(3N/4)` |
 | [[EPaxos]] | `N = 2F + 1` replicas | `F + floor((F + 1)/2)` total, including the command leader; non-leader replies are one fewer |

@@ -30,6 +30,10 @@
 
 [[WPaxos]] makes recovery and placement the same Phase 1 action. A higher per-object ballot gathers a wide `Q1` that intersects every prior local `Q2`; the new owner must finish accepted uncommitted slots before opening later slots. The paper's displayed `1b` omits the full accepted-value payload, so exact selection remains Unclear.
 
+## Frozen knowledge census
+
+[[KCensus]] stops acceptance-evidence growth at `n-f` voters and tests candidate values against their frozen first-order records. A report can reveal a required acceptor that chose another value, or a required witness that lacks necessary evidence. Any actual fast commit survives both tests; otherwise the original input may be adopted when no candidate remains. Adoption still needs fallback consensus ([[KCensus-2026]], §4.4, Algorithm 6; [[knowledge-census-recovery]]).
+
 ## Related pages
 [[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
 

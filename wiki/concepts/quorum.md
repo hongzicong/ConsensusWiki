@@ -28,6 +28,10 @@ A [[quorum]] is a set of participants whose evidence is sufficient for a protoco
 
 [[WPaxos]] composes zone and node choices. `Q1` takes `f_n + 1` nodes from each of `Z - f_z` zones; `Q2` takes `l - f_n` nodes from each of `f_z + 1` zones. Their sizes are `(f_n + 1)(Z - f_z)` and `(l - f_n)(f_z + 1)`, and every cross-phase pair intersects even though same-phase quorums may not.
 
+## KCensus evidence geometry
+
+[[KCensus]] requires a per-proposer set `Q_p` larger than `f`, but that count is insufficient. Every pair also needs more than `f` distinct witnesses of acceptances from `Q_p ∩ Q_q`, potentially outside the intersection. See [[knowledge-requirement]] for the exact predicate. Recovery collects any `n-f` frozen voting reports; KSMR fallback uses a Paxos majority ([[KCensus-2026]], §§3–4, 6).
+
 ## Related pages
 [[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[flexible-quorum]]
 

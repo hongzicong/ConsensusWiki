@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: leader roles
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [leader]
 ---
 
@@ -9,6 +9,7 @@ tags: [leader]
 
 | Protocol | Leader role | Fast-path leader involvement | Source |
 |---|---|---|---|
+| [[KCensus]] | Per-instance proposer/adopter; KSMR Paxos fallback leader; optional execution delegate | No mandatory global leader or universal leader-including quorum; client can be non-voting | [[KCensus-2026]], §§4–6 |
 | [[FastPaxos]] | Coordinator prepares fast/classic rounds | Can be bypassed by proposer-to-acceptor votes after `any` | [[FastPaxos-2006]] |
 | [[FPaxos]] | Proposer completing Phase 1 becomes stable leader; leader runs repeated Phase 2 with chosen flexible quorums | Leader remains on the normal path; flexibility changes acceptor evidence, not proposer authority | [[Flexible-Paxos-2016]] |
 | [[OmniPaxos]] | BLE elects the highest-ballot quorum-connected candidate without testing log freshness; Sequence Paxos then synchronizes it | Leader remains on every stable replication path; followers need only connect to that leader, not elect it in BLE | [[Omni-Paxos-2023]], §§4-5 |

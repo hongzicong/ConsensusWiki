@@ -10,5 +10,9 @@ Validity/nontriviality means chosen values or executed commands originate from p
 
 [[WPaxos]] calls the property non-triviality: every committed command is part of a sequence of client-proposed commands. Ownership transfer changes the leader and ballot but does not authorize invented application values.
 
+## KCensus: two meanings of validity
+
+[[KCensus]] has ordinary proposal validity: an adopted or committed value originated in a `Propose` call (Theorem A.21). A `⊥` result from the candidate search means no candidate survived; the proposer then adopts its own real input, not `⊥`. Separately, a *valid requirement* means `|R.keys()| > f`; that resilience check is not itself the consensus validity property ([[KCensus-2026]], Algorithms 1–2, Appendix A).
+
 ## Related pages
 [[PigPaxos]], [[Rabia]], [[OmniPaxos]], [[WPaxos]], [[sequence-consensus]], [[agreement]], [[recovery]], [[quorum]]

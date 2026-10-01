@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fault models
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
 tags: [failure-model]
 ---
 
@@ -16,6 +16,7 @@ Fault assumptions determine quorum sizes, recovery evidence, and which liveness 
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[KCensus]] | Up to `f` voting-process crashes; arbitrary non-voting client failures | `n ≥ 2f+1`; FIFO lossless links between correct processes; non-Byzantine | Required witnesses/acceptors are voters only | Eventual crash suspicion and `n-f` census replies; fallback progress separately | Core does not specify restart persistence or membership change | [[KCensus-2026]], §§2.3, 4.5 |
 | [[FastPaxos]] | Acceptors may fail non-Byzantinely | Non-Byzantine faults; safety independent of timing | Quorum intersection protects chosen values despite failed acceptors | Progress requires enough live acceptors and eventual recovery coordination | Parameterize acceptor count and failure budget | [[FastPaxos-2006]] |
 | [[FPaxos]] | Proposers/acceptors may fail and messages may be lost | Non-Byzantine asynchronous model; tolerance is phase/quorum-system-specific | Cross-phase intersection preserves agreement despite failures | Current leader needs `Q2`; recovery needs `Q1`; simple quorum full recovery guaranteed through `\|Q2\| - 1` failures when `Q2` is smaller | For grids/structured families, failure placement matters more than count | [[Flexible-Paxos-2016]], §§2-5 |
 | [[OmniPaxos]] | Servers fail and recover; individual bidirectional links may partition while endpoints remain alive | Non-Byzantine fail-recovery with persistent storage; messages may drop/delay; session-based FIFO perfect links | Ballots, majority intersection, and prefix synchronization preserve safety | Partial synchrony plus at least one QC server enables progress; paper gives no explicit `N,f` formula | Model process state and link connectivity independently; alive does not imply quorum-connected | [[Omni-Paxos-2023]], §§2-5 |

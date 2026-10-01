@@ -1,6 +1,7 @@
 # ConsensusWiki Index
 
 ## Papers
+- [[KCensus-2026]] - Synthesized latency-optimal fast paths using acceptance knowledge, compatible requirements, and frozen-census recovery; 2026 preprint for EuroSys 2027.
 - [[FastPaxos-2006]] - Fast rounds, Figure 2 safe-value selection, classic-round recovery, and fixed versus cardinality-based quorum requirements.
 - [[Generalized-Paxos-2005]] - Generalized Paxos over c-structs, enabling fast learning of compatible concurrent commands.
 - [[EPaxos-2013]] - Leaderless dependency-based Paxos for geo-replicated SMR.
@@ -24,6 +25,7 @@
 - [[Hermes-2020]] - Membership-based single-key replication using invalidations, logical timestamps, and replayable writes.
 
 ## Protocols
+- [[KCensus]] - Per-proposer knowledge requirements with adopt-commit recovery and Paxos fallback in KSMR.
 - [[FastPaxos]] - Classic Paxos extended with fast rounds.
 - [[GPaxos]] - Generalized Paxos using compatible command structures instead of a single total command sequence.
 - [[EPaxos]] - Egalitarian Paxos with command leaders and dependencies.
@@ -47,6 +49,7 @@
 - [[Hermes]] - Read-one/write-all replication with local reads, per-update coordinators, leased membership, and safe write replay.
 
 ## Concepts
+- [[knowledge-requirement]] - Which acceptances each witness must record, and how pairwise compatibility preserves recoverability.
 - [[quorum]] - Evidence sets and intersection requirements.
 - [[fast-path]] - Low-latency common-case commit/learn path.
 - [[slow-path]] - Fallback after disagreement or uncertainty.
@@ -59,7 +62,7 @@
 - [[randomized-consensus]] - Consensus that uses random choices to obtain probabilistic termination.
 - [[common-coin]] - Shared random bit abstraction used by Rabia's Weak-MVC.
 - [[SMR]] - State-machine replication by ordered command execution.
-- [[witness]] - CURP temporary unordered durability component.
+- [[witness]] - CURP unordered durability component and the distinct KCensus acceptance-evidence role.
 - [[slowdown-tolerance]] - Performance resilience when replicas remain responsive but slow.
 - [[counterfactual-evaluation]] - Parallel estimation of alternative-system performance without letting the shadow path control correctness.
 - [[roster-lease]] - Majority-backed agreement on leader and per-key responder metadata with catch-up thresholds.
@@ -99,6 +102,7 @@
 - [[FastPaxos-EPaxos-SwiftPaxos]] - Focused modeling comparison.
 
 ## Proof notes
+- [[knowledge-census-recovery]] - KCensus evidence invariants, census preservation/exclusion lemmas, and scoped optimality argument.
 - [[quorum-intersection]] - Intersection obligations.
 - [[adopt-commit-abstraction]] - Fast-evidence abstraction.
 
