@@ -1,17 +1,17 @@
 # ConsensusWiki Index
 
 ## Papers
-- [[KCensus-2026]] - Synthesized latency-optimal fast paths using acceptance knowledge, compatible requirements, and frozen-census recovery; 2026 preprint for EuroSys 2027.
+- [[KCensus-2026]] - Synthesized latency-optimal fast paths using acceptance knowledge, compatible requirements, and frozen-census recovery; 2026 preprint for EuroSys 2027; local audit distinguishes proposer weights and unrealized relay predictions.
 - [[FastPaxos-2006]] - Fast rounds, Figure 2 safe-value selection, classic-round recovery, and fixed versus cardinality-based quorum requirements.
 - [[Generalized-Paxos-2005]] - Generalized Paxos over c-structs, enabling fast learning of compatible concurrent commands.
-- [[EPaxos-2013]] - Leaderless dependency-based Paxos for geo-replicated SMR.
+- [[EPaxos-2013]] - Leaderless dependency-based Paxos for geo-replicated SMR; deployment audit distinguishes valid ingress choices and paper-specific thrifty policies.
 - [[EPaxos-Revisited-2021]] - Reevaluation of EPaxos conflict behavior, tail latency, and clock-based mitigation.
 - [[Making-Democracy-Work-2025]] - EPaxos* correction with validation-based recovery and optimal `f`/`e` quorum bound.
 - [[Mencius-2008]] - Multi-leader Paxos-derived SMR for WANs using rotating coordinators and cheap `no-op` skips.
 - [[PigPaxos-2021]] - Multi-Paxos communication-overlay protocol using randomized relay aggregation.
 - [[Atlas-2020]] - Leaderless planet-scale SMR with fast quorum `floor(n/2) + f` and recoverable dependency unions.
 - [[Pando-2020]] - Erasure-coded geo-storage with Phase 1a/1b/2 quorums.
-- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums, optimized reads, and the FastPaxos+ evaluation-baseline mapping.
+- [[SwiftPaxos-2024]] - Dependency-based SMR with leader-including fast quorums, optimized reads, FastPaxos+ baseline mapping, Flint's selection objective, and independent topology-derived baseline configurations.
 - [[Rabia-2021]] - Randomized leaderless SMR using Weak-MVC and forfeited `⊥` slots.
 - [[CURP-2019]] - Primary-backup fast replication using commutative unordered witness durability.
 - [[Copilot-2020]] - Dual-pilot SMR that preserves normal latency despite one slow replica.

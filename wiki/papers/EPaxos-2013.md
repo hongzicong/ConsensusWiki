@@ -83,6 +83,11 @@ EPaxos draws on Paxos, Fast Paxos, Generalized Paxos, and Mencius. [[SwiftPaxos]
 ## Limitations
 Execution may lag commit under dependency chains or high conflict. Exact optimized recovery is subtle; use the technical report for full proofs.
 
+## Deployment policy versus protocol legality
+The core lets clients choose an ingress replica (§4.1), so a topology-based ingress optimizer need not change consensus semantics. It can nevertheless differ from an evaluated baseline: [[SwiftPaxos-2024]] routes EPaxos clients to their nearest replica and uses thrifty mode; [[KCensus-2026]] uses non-thrifty EPaxos. This paper describes thrifty operation in §6.2. Thus there is no single evaluation mode shared by all three papers.
+
+Local Arena audit (2026-10-01): `epaxos.New` forces thrifty mode via the shared replica constructor. The `thrifty: false` text in its input does not describe the effective mode. The new slow-first ingress selector happens to match nearest routing at five replicas, but changes 2/6 client routes at 9/13 replicas. Those changes are local deployment policy, not evidence that this paper prescribed the optimizer. Offline checks do not model dependency execution or queueing.
+
 ## Open questions
 - TODO: Extract the full optimized recovery proof obligations from the EPaxos technical report cited by the paper.
 
