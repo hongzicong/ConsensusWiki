@@ -107,5 +107,5 @@
 - [[adopt-commit-abstraction]] - Fast-evidence abstraction.
 
 ## Open questions
-- [[new-protocol-ideas]] - 100 defect-driven SMR candidates with evidence clusters, a ranked shortlist, red-team attacks, and next proof/model artifacts.
+- [[new-protocol-ideas]] - 30 speculative SMR ideas in research-priority order.
 - [[unresolved-confusions]] - TODOs and uncertain extracted facts.
