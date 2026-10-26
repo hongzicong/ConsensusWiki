@@ -26,5 +26,7 @@ Liveness is conditional in asynchronous consensus; each paper states progress un
 
 [[WPaxos]] progresses while at least one valid `Q1` and `Q2` remain alive and leader contention resolves. If every `Q1` is unavailable, object stealing stops, but an existing owner may continue serving its objects where a valid `Q2` remains; this is partial availability, not full ownership mobility.
 
+[[PQL]] can block affected writes despite a live Paxos majority until a failed holder's binding promises expire; §3.8 bounds this policy by `t_grace + t_guard + t_lease` under its clock assumptions. [[PQR]] leaves writes unchanged but needs a responsive read discovery quorum and eventual execution of the selected prefix. Excluding the leader can reduce read availability, and repeated rinse has no fixed two-RTT bound. Sources: [[Paxos-Quorum-Leases-2014]], §§3.7-3.8; [[Linearizable-Quorum-Reads-2019]], §§4-4.2.
+
 ## Related pages
 [[PigPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[Hermes]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[slowdown-tolerance]], [[agreement]], [[recovery]], [[quorum]]

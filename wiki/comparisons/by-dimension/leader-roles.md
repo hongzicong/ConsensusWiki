@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: leader roles
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [leader]
 ---
 
@@ -9,6 +9,8 @@ tags: [leader]
 
 | Protocol | Leader role | Fast-path leader involvement | Source |
 |---|---|---|---|
+| [[PQR]] | Stable leader handles unchanged writes; client coordinates read discovery and rinse | Bypassed by intended follower read path; read sets must still intersect all write sets; follower-only availability can be weaker | [[Linearizable-Quorum-Reads-2019]], §§4-5 |
+| [[PQL]] | Stable Multi-Paxos leader orders writes and proposes lease configurations | Read holders bypass leader; implementation includes leader in every holder set; all proposers honor obligations learned in replies | [[Paxos-Quorum-Leases-2014]], §§3.2-3.4, 6 |
 | [[KCensus]] | Per-instance proposer/adopter; KSMR Paxos fallback leader; optional execution delegate | No mandatory global leader or universal leader-including quorum; client can be non-voting | [[KCensus-2026]], §§4–6 |
 | [[FastPaxos]] | Coordinator prepares fast/classic rounds | Can be bypassed by proposer-to-acceptor votes after `any` | [[FastPaxos-2006]] |
 | [[FPaxos]] | Proposer completing Phase 1 becomes stable leader; leader runs repeated Phase 2 with chosen flexible quorums | Leader remains on the normal path; flexibility changes acceptor evidence, not proposer authority | [[Flexible-Paxos-2016]] |

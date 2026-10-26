@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: conflict handling
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [conflict]
 ---
 
@@ -9,6 +9,8 @@ tags: [conflict]
 
 | Protocol | Conflict meaning | Resolution |
 |---|---|---|
+| [[PQR]] | Accepted/executed mismatch for a read object | Host Paxos orders writes; client rinses dirty progress before returning execution-justified data; per-key frontiers avoid unrelated interference ([[Linearizable-Quorum-Reads-2019]], §§4-4.1, 6) |
+| [[PQL]] | A local read overlaps an accepted interfering write | Delay the read until the write is resolved/executed; atomic composite reads require leases for every object; multi-object writes cover holder unions ([[Paxos-Quorum-Leases-2014]], §§3.6, 3.9, 5.2) |
 | [[KCensus]] | Different values reach one slot; acceptance remains immutable | Disseminate `DoAdopt`, freeze a census, adopt safely, then run Paxos; sharding separates non-interfering commands; retry losing commands in later slots ([[KCensus-2026]], §§4, 6) |
 | [[FastPaxos]] | Concurrent proposals accepted in a fast round | Collision recovery chooses a safe value |
 | [[FPaxos]] | Different proposers race with distinct proposal numbers, possibly using disjoint Phase 2 quorums | Cross-phase acceptor either blocks the lower ballot after a higher promise or reports the earlier accepted value so the higher proposer adopts it |

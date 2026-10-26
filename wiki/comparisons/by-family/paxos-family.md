@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-family
 family: paxos
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
+protocols: [PQR, PQL, FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos]
 tags: [paxos]
 ---
 
@@ -13,6 +13,8 @@ These protocols preserve Paxos-style safety through quorum evidence while optimi
 ## Protocol table
 | Protocol | Main idea | What it changes | Strength | Weakness | Source |
 |---|---|---|---|---|---|
+| [[PQR]] | Client-driven quorum reads with rinse | Leaves writes unchanged and exposes accepted/executed progress | No leases; read load off leader | Read fanout and dirty-prefix waiting | [[Linearizable-Quorum-Reads-2019]] |
+| [[PQL]] | Majority-backed per-object read leases | Adds binding holder notifications to writes | Local reads beyond leader | Clock assumptions and failed-holder write blocking | [[Paxos-Quorum-Leases-2014]] |
 | [[FastPaxos]] | Fast rounds | Lets acceptors vote directly after `any` | Two-delay learning without collision | Collision recovery complexity | [[FastPaxos-2006]] |
 | [[GPaxos]] | Generalized command-history consensus | Replaces single values/total sequences with compatible c-structs | Two-delay learning for non-interfering concurrent commands | Abstract c-struct recovery and checkpointing complexity | [[Generalized-Paxos-2005]] |
 | [[EPaxos]] | Leaderless dependency order | Any replica leads commands | Load balance and low WAN commit latency | Complex dependency recovery | [[EPaxos-2013]] |

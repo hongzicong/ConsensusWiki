@@ -34,6 +34,8 @@
 
 [[KCensus]] stops acceptance-evidence growth at `n-f` voters and tests candidate values against their frozen first-order records. A report can reveal a required acceptor that chose another value, or a required witness that lacks necessary evidence. Any actual fast commit survives both tests; otherwise the original input may be adopted when no candidate remains. Adoption still needs fallback consensus ([[KCensus-2026]], §4.4, Algorithm 6; [[knowledge-census-recovery]]).
 
+[[PQL]] retains ordinary Paxos value selection but must preserve active holder obligations across Prepare and configuration changes; a restarted replica waits out old promises. [[PQR]] also retains host recovery: reads wait for the selected slot/prefix to execute rather than repairing an accepted value themselves. Exact data binding after overwrite remains TODO in the PQR paper. Sources: [[Paxos-Quorum-Leases-2014]], §§3.2, 3.5-3.8; [[Linearizable-Quorum-Reads-2019]], §§3-4; [[read-freshness]].
+
 ## Related pages
 [[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[reconfiguration]], [[roster-lease]], [[view-change-hazard]], [[flexible-quorum]], [[object-stealing]]
 

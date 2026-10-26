@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fast paths
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [fast-path]
 ---
 
@@ -10,6 +10,8 @@ tags: [fast-path]
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[PQR]] | Rinse-free quorum read in one client RTT when accepted/executed progress is clean | Per-object clean evidence can avoid unrelated interference | Returned result is already execution-confirmed | Dirty reports require one-node rinse and possibly retries | No identical-value quorum or new fast write quorum | [[Linearizable-Quorum-Reads-2019]], §§4-4.1 |
+| [[PQL]] | Atomic local read at a caught-up active holder with leases for the full read set | No unresolved interfering write; safe lease timers | Grantor/write-majority intersection prevents stale responses | Missing leases use Paxos; interference delays local read | Read fast path; no separate fast write quorum | [[Paxos-Quorum-Leases-2014]], §§3.5-3.6 |
 | [[KCensus]] | Proposer learns that every required witness recorded its required acceptances | Fixed valid and pairwise-compatible requirements; sufficient same-value evidence | Evidence survives through any `n-f` frozen census | Conflict or suspicion triggers adoption; topology affects latency | No universal one-RTT or size-only fast predicate | [[KCensus-2026]], §§4–5 |
 | [[FastPaxos]] | Acceptors vote after `phase2a any` | No collision for two-delay learn | Collision recovery must pick safe value | Frequent collisions hurt progress | Model `any` separately | [[FastPaxos-2006]] |
 | [[FPaxos]] | Ordinary stable-leader Phase 2 over a smaller or structured `Q2` | Every valid recovery `Q1` intersects every valid deciding `Q2` | Keeps Paxos agreement while permitting same-phase disjoint quorums | Smaller `Q2` can improve common latency/load but larger `Q1` makes leader recovery harder | This is not a leader-bypassing fast round or fewer-message-delay path | [[Flexible-Paxos-2016]], §§3-5 |

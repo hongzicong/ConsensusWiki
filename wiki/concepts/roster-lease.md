@@ -28,6 +28,8 @@ Roster leases use the standard guard/renew pattern under bounded clock drift. Th
 - Distinguish stable roster evidence from write commit evidence.
 - Model per-key responders even if an implementation compresses them into key ranges.
 
+[[quorum-lease|PQL quorum leases]] protect timed synchronous-notification obligations for per-object holders. Bodega instead protects ballot/roster agreement and adds its own threshold catch-up and held-read release rules. Their holder/responder roles should not collapse into a common lease algorithm. Sources: [[Paxos-Quorum-Leases-2014]], §§3.2-3.6; [[Bodega-2026]], §§3-4; [[read-strategies]].
+
 ## Related pages
 
 [[Bodega]], [[Bodega-2026]], [[quorum]], [[leader]], [[recovery]], [[linearizability]], [[liveness]]

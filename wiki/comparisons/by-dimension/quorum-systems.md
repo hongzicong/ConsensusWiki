@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: quorum systems
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [quorum]
 ---
 
@@ -16,6 +16,8 @@ Every fast path here buys latency by strengthening quorum intersections or metad
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[PQR]] | Standard read/host quorum `⌊n/2⌋ + 1`; rinse `1`; flexible examples `(N,Q2,q_read)=(5,4,2),(7,5,3)` | Every read set intersects every Phase 2 write set; host separately keeps Q1/Q2 intersection | Discovery sees earlier chosen writes; execution confirms stable prefix | Leader-excluding majority may be unavailable despite host write progress | Do not count a majority of only followers or mistake rinse for recovery | [[Linearizable-Quorum-Reads-2019]], §§4-4.2, Table 1 |
+| [[PQL]] | Classic/Prepare `⌊N/2⌋ + 1`; active holder has `⌊N/2⌋` peer promises plus self; arbitrary holder set | Timed binding promises; implementation uses majority holders including leader | Write majority intersects grantor majority and learns every active notification obligation | Failed holders can block writes until expiry | Holder set, grantor quorum, and accepting quorum are different sets | [[Paxos-Quorum-Leases-2014]], §§3.2-3.8 |
 | [[KCensus]] | Per-proposer witness/acceptor requirements, not cardinality alone | `n ≥ 2f+1`; `\|Q_p\| > f`; pairwise `\|W_p ∪ W_q\| > f`; census `n-f` | Each census intersects the distinguishing-witness set | Missing required evidence triggers adoption then Paxos fallback | Count distinct witnesses; non-voting clients never contribute | [[KCensus-2026]], §§3–4 |
 | [[FastPaxos]] | Classic and fast quorums | Any two quorums intersect; fast rounds require intersection of one arbitrary quorum with two fast quorums | Prevents two fast values surviving recovery | Fast progress needs nonfaulty fast quorum | Model `Quorum(i)` by round | [[FastPaxos-2006]] |
 | [[FPaxos]] | Separate Phase 1 and Phase 2 quorum families; only cross-phase pairs must intersect | General: every `Q1` intersects every `Q2`; simple thresholds: `\|Q1\| + \|Q2\| > N` | Later Phase 1 sees evidence from every earlier deciding Phase 2 quorum | Stable leader needs `Q2`; leader replacement needs `Q1` and `Q2`; structured availability depends on placement | Never assume `Q1-Q1` or `Q2-Q2` intersection; record phase and family membership | [[Flexible-Paxos-2016]], §§3-5 |

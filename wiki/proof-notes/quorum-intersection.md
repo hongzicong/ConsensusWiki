@@ -200,3 +200,9 @@ Therefore every `q1 ∈ Q1` intersects every `q2 ∈ Q2`. This is an [[FPaxos]] 
 ## KCensus counts distinguishing witnesses
 
 For fast sets `Q_p,Q_q`, let `I = Q_p ∩ Q_q`, `W_p = {w ∈ Q_p : R_p[w] ∩ I ≠ ∅}`, and similarly `W_q`. [[KCensus]] requires `|Q_p| > f` and `|W_p ∪ W_q| > f`. Every census `C` of size `n-f` therefore intersects both `Q_p` and `W_p ∪ W_q`. The latter intersection, combined with frozen truthful evidence, eliminates a rival to any committed value. An intersection witness need not itself be an acceptor in `I`; replacing this with `|I| > f` would exclude legal strategies ([[KCensus-2026]], Algorithm 1, Lemmas A.11–A.14; [[knowledge-requirement]]).
+
+## Read visibility versus result stability
+
+[[PQL]] intersects a write-accepting majority with each active holder's grantor majority to propagate synchronous notification obligations. Its holder set itself need not be a majority. Activation catch-up is a separate obligation. Source: [[Paxos-Quorum-Leases-2014]], §§3.2, 3.6.
+
+[[PQR]] requires every discovery set to intersect every Phase 2 write set. For unconstrained threshold sets, the derived condition is `q_read + q_write > N`. Its examples `(N,q_write,q_read) = (5,4,2)` and `(7,5,3)` satisfy this without requiring read/read intersection. Host Phase 1/Phase 2 intersection is still required separately. Discovery observes accepted progress; [[rinse]] confirms execution at one replica to prevent returning an unchosen value. Source: [[Linearizable-Quorum-Reads-2019]], §§4-4.2; [[read-freshness]].

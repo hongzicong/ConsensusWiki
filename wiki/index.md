@@ -1,6 +1,8 @@
 # ConsensusWiki Index
 
 ## Papers
+- [[Linearizable-Quorum-Reads-2019]] - Client-driven follower quorum reads with execution-confirming rinse and flexible read/write tradeoffs.
+- [[Paxos-Quorum-Leases-2014]] - Per-object local reads using majority-backed timed promises and holder-covering write notifications.
 - [[KCensus-2026]] - Synthesized latency-optimal fast paths using acceptance knowledge, compatible requirements, and frozen-census recovery; 2026 preprint for EuroSys 2027; local audit distinguishes proposer weights and unrealized relay predictions.
 - [[FastPaxos-2006]] - Fast rounds, Figure 2 safe-value selection, classic-round recovery, and fixed versus cardinality-based quorum requirements.
 - [[Generalized-Paxos-2005]] - Generalized Paxos over c-structs, enabling fast learning of compatible concurrent commands.
@@ -25,6 +27,8 @@
 - [[Hermes-2020]] - Membership-based single-key replication using invalidations, logical timestamps, and replayable writes.
 
 ## Protocols
+- [[PQR]] - Lease-free Paxos quorum reads; dirty observations wait for one replica to execute the selected prefix.
+- [[PQL]] - Paxos Quorum Leases with per-object holders, guarded renewal, and activation catch-up.
 - [[KCensus]] - Per-proposer knowledge requirements with adopt-commit recovery and Paxos fallback in KSMR.
 - [[FastPaxos]] - Classic Paxos extended with fast rounds.
 - [[GPaxos]] - Generalized Paxos using compatible command structures instead of a single total command sequence.
@@ -49,6 +53,8 @@
 - [[Hermes]] - Read-one/write-all replication with local reads, per-update coordinators, leased membership, and safe write replay.
 
 ## Concepts
+- [[rinse]] - PQR execution confirmation that stabilizes quorum-discovered accepted progress.
+- [[quorum-lease]] - Distinguishes read holders, majority grantors, and write notification obligations.
 - [[knowledge-requirement]] - Which acceptances each witness must record, and how pairwise compatibility preserves recoverability.
 - [[quorum]] - Evidence sets and intersection requirements.
 - [[fast-path]] - Low-latency common-case commit/learn path.
@@ -82,6 +88,7 @@
 - [[linearizability]] - Operation order semantics for SMR and storage protocols.
 
 ## Comparisons
+- [[read-strategies]] - Local lease readers, quorum discovery, rinse, and the corresponding write/availability costs.
 - [[protocol-catalog]] - Concise protocol table.
 - [[quorum-systems]] - Quorum mechanisms by protocol.
 - [[fast-paths]] - Fast-path assumptions and evidence.
@@ -102,6 +109,7 @@
 - [[FastPaxos-EPaxos-SwiftPaxos]] - Focused modeling comparison.
 
 ## Proof notes
+- [[read-freshness]] - Separates visibility of prior writes from stable executed results in PQL, PQR, and Bodega.
 - [[knowledge-census-recovery]] - KCensus evidence invariants, census preservation/exclusion lemmas, and scoped optimality argument.
 - [[quorum-intersection]] - Intersection obligations.
 - [[adopt-commit-abstraction]] - Fast-evidence abstraction.

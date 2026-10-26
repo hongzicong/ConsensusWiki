@@ -32,6 +32,8 @@ A [[quorum]] is a set of participants whose evidence is sufficient for a protoco
 
 [[KCensus]] requires a per-proposer set `Q_p` larger than `f`, but that count is insufficient. Every pair also needs more than `f` distinct witnesses of acceptances from `Q_p ∩ Q_q`, potentially outside the intersection. See [[knowledge-requirement]] for the exact predicate. Recovery collects any `n-f` frozen voting reports; KSMR fallback uses a Paxos majority ([[KCensus-2026]], §§3–4, 6).
 
+[[PQL]] separates arbitrary read-holder sets from majority grantor and accepting sets; writes cover binding holder obligations. [[PQR]] instead needs read/write intersection for discovery and then one executed-state confirmation for rinse. The one-replica rinse is not a read quorum by itself. Sources: [[Paxos-Quorum-Leases-2014]], §§3.2-3.6; [[Linearizable-Quorum-Reads-2019]], §§4-4.2; [[read-strategies]].
+
 ## Related pages
 [[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[Mencius]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[reliable-membership]], [[partial-connectivity]], [[sequence-consensus]], [[flexible-quorum]]
 

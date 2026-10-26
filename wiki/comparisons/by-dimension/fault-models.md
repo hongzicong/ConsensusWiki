@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: fault models
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [failure-model]
 ---
 
@@ -16,6 +16,8 @@ Fault assumptions determine quorum sizes, recovery evidence, and which liveness 
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[PQR]] | Inherited non-Byzantine Paxos crash/nonresponse model | Standard host majority or configured flexible sets | Chosen-prefix execution must survive host recovery | Follower-only read quorum may fail before host majority availability does | No standalone PQR failure/restart theorem in the PDF | [[Linearizable-Quorum-Reads-2019]], §§3-4 |
+| [[PQL]] | Crash/nonresponse, no Byzantine faults | At least `⌊N/2⌋ + 1` correct replicas for Paxos progress | Expiration preserves obligations despite holder failure | Surviving majority can still temporarily wait on a failed holder | Lease availability is stricter than bare Paxos majority availability | [[Paxos-Quorum-Leases-2014]], §§2.1, 3.7-3.8 |
 | [[KCensus]] | Up to `f` voting-process crashes; arbitrary non-voting client failures | `n ≥ 2f+1`; FIFO lossless links between correct processes; non-Byzantine | Required witnesses/acceptors are voters only | Eventual crash suspicion and `n-f` census replies; fallback progress separately | Core does not specify restart persistence or membership change | [[KCensus-2026]], §§2.3, 4.5 |
 | [[FastPaxos]] | Acceptors may fail non-Byzantinely | Non-Byzantine faults; safety independent of timing | Quorum intersection protects chosen values despite failed acceptors | Progress requires enough live acceptors and eventual recovery coordination | Parameterize acceptor count and failure budget | [[FastPaxos-2006]] |
 | [[FPaxos]] | Proposers/acceptors may fail and messages may be lost | Non-Byzantine asynchronous model; tolerance is phase/quorum-system-specific | Cross-phase intersection preserves agreement despite failures | Current leader needs `Q2`; recovery needs `Q1`; simple quorum full recovery guaranteed through `\|Q2\| - 1` failures when `Q2` is smaller | For grids/structured families, failure placement matters more than count | [[Flexible-Paxos-2016]], §§2-5 |

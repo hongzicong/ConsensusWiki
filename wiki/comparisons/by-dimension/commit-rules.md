@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: commit rules
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [commit-rule, quorum, fast-path, recovery]
 ---
 
@@ -16,6 +16,8 @@ Commit predicates are the bridge between protocol message evidence and [[agreeme
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[PQR]] | Writes unchanged; read responds after intersecting discovery plus execution-confirmed selected frontier | Ordered host execution; clean first round may subsume rinse | Avoids both stale learned-commit reads and unstable accepted-only reads | Dirty reads wait/retry; no bounded two-RTT guarantee | Read completion is not a new consensus commit | [[Linearizable-Quorum-Reads-2019]], §§3-4.1, 6 |
+| [[PQL]] | Majority accepts plus synchronous notification acknowledgements from every binding affected holder | Accept and applicable Prepare replies propagate obligations | Every completed write is visible or pending at each authorized reader | Holder coverage may extend write latency | Local read completion is separate from consensus commit; explicit implicit-vote accounting | [[Paxos-Quorum-Leases-2014]], §§3.2, 3.6, 3.9; §4 footnote 6 |
 | [[KCensus]] | `accepted = v` and every `R_p[q]` is contained in the proposer's view of `q`'s evidence | Requirements passed validity/compatibility checks | Local second-order evidence implies recoverable fast commitment | Otherwise adopt a safe value and decide through fallback | Separate commit, adoption, fallback decision, and client execution | [[KCensus-2026]], Algorithms 4, 6–7; §6 |
 | [[FastPaxos]] | A value is chosen in a round when a quorum for that round accepts it; fast rounds use fast quorums | Fast-round collision-free common case, with recovery after collisions | Later rounds must select a value safe with respect to possibly chosen lower-round values | Progress needs a coordinator/recovery path after collision | Model `any` and the safe phase-2a value predicate separately | [[FastPaxos-2006]] |
 | [[FPaxos]] | Value decided after every acceptor in one valid Phase 2 quorum accepts `(proposal, value)` | Chosen `Q2` belongs to a family intersecting every valid `Q1`; no majority or same-phase intersection required | Any later Phase 1 can discover and preserve the decision | Smaller `Q2` improves stable-leader progress but may enlarge recovery `Q1` | Commit predicate is ordinary Paxos acceptance with different quorum geometry, not a fast round | [[Flexible-Paxos-2016]], §§3, 5 |

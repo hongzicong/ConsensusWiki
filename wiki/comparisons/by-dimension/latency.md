@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: latency
-protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Hermes, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos, KCensus]
+protocols: [Paxos, FPaxos, OmniPaxos, N2Paxos, Mencius, FastPaxosPlus, GPaxos, EPaxos, CURP-N2Paxos, SwiftPaxos, Hermes, Copilot, Avicenna, Bodega, Jetpack, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [latency, fast-path, slow-path, contention, stable-run]
 ---
 
@@ -154,6 +154,15 @@ See [[new-protocol-ideas]] for the focused latency roadmap and proof obligations
 [[KCensus-2026]], §5.2 and Appendix B, optimize a weighted mean/percentile of proposal-to-decision time over single-correct-proposer executions, with fixed known link latencies and accurate crash detection in the stable state. This does not supply the four workload-class bounds above. KSMR reports mostly one-round-trip fast commits (§6), but topology, evidence routes, execution delegation, and queueing matter.
 
 Its default seven-replica experiments reduce mean latency by 9–15% across four deployments; the maximum 16% is in the scalability study. The limit is visible under contention: in NH with Zipf 0.99 and 50/50 reads/writes, write mean/p99 is 158/385 ms versus SwiftPaxos 146/209 ms (§§7.1, 7.3, 7.5). These are source-paper results with reimplemented baselines, not measurements in this repository.
+
+## Read-specific latency
+
+These read extensions do not provide a new four-run-class write latency bound for the table above. Their source papers instead describe the following read paths; RTTs refer to the client/replica or lease-management communication in those papers, not a new uniform `δ` result.
+
+| Protocol | Favorable read path | Waiting/fallback | Write impact | Source |
+|---|---|---|---|---|
+| [[PQL]] | Local execution at one active, caught-up holder; no inter-replica round for the read | Wait on interfering writes or route through Paxos without the required leases | Must synchronously notify all binding holders; a failed holder blocks affected writes until expiry | [[Paxos-Quorum-Leases-2014]], §§3.6-3.9, 5.2 |
+| [[PQR]] | One client-to-quorum RTT when accepted/executed evidence is clean | Dirty reads add single-node rinse RTTs until execution; no universal two-RTT limit | Base write path unchanged; optional larger `Q2` trades write cost/availability for smaller read quorum | [[Linearizable-Quorum-Reads-2019]], §§4-4.2, 6 |
 
 ## Related pages
 

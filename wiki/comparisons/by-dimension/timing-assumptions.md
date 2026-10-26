@@ -1,7 +1,7 @@
 ---
 type: comparison-dimension
 dimension: timing assumptions
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, PigPaxos, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [timing, liveness]
 ---
 
@@ -16,6 +16,8 @@ A model that bakes timing into safety can prove the wrong theorem, while a model
 ## Comparison table
 | Protocol | Mechanism | Assumption | Safety relevance | Liveness relevance | Modeling note | Source |
 |---|---|---|---|---|---|---|
+| [[PQR]] | No read leases or clock assumptions; host Paxos timing inherited | Read/write intersection and execution evidence | Read safety does not rely on elapsed time | Timely quorum replies and eventual host execution required | One RTT clean, additional rinse RTTs dirty; measured two RTTs is not a bound | [[Linearizable-Quorum-Reads-2019]], §§3-4, 6 |
+| [[PQL]] | Asynchronous network; unsynchronized clocks with similar rates and drift guard | Holder expiry precedes grantor obligation expiry | Lease safety depends on timer containment | RTT-sized guards/renewal lead time support successful renewal | Distinguish safe expiration assumptions from performance RTT estimates | [[Paxos-Quorum-Leases-2014]], §§3.1, 3.5, 3.8 |
 | [[KCensus]] | Async evidence safety; failure-detector adoption; partial-synchronous SMR | Optimality additionally assumes fixed known latencies, permanent crashes, and accurate detection in stable single-proposer runs | False suspicion safely forces adoption | Eventual suspicion releases failed requirements; fallback must terminate | Keep optimization assumptions separate from safety and arbitrary-load performance | [[KCensus-2026]], §2.3, §5.2, Appendix B |
 | [[FastPaxos]] | Fast and classic rounds | Asynchronous safety; progress needs favorable conditions/coordinator recovery | Safety is quorum-based, not timing-based | Collisions and failures require eventual recovery progress | Keep safety invariant independent of timers | [[FastPaxos-2006]] |
 | [[FPaxos]] | Stable-leader Phase 2 over a selected quorum; Phase 1 on election/recovery | Asynchronous safety; additional synchrony/stable proposer assumptions for progress | Safety depends only on persistent promises and cross-phase intersection | Smaller targeted `Q2` can reduce latency, but slow/failing selected members cause retransmission; leader loss requires available `Q1` | Do not convert performance gains into fewer protocol phases or synchronous safety | [[Flexible-Paxos-2016]], §§2-6 |

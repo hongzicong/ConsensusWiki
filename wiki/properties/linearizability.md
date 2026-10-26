@@ -24,5 +24,7 @@ Linearizability gives each operation a single point between invocation and respo
 
 [[WPaxos]] provides per-object linearizability, not one global total order. Each object's commands execute by increasing slot under one ballot owner at a time; different object logs may advance independently. Multi-object atomicity is outside the basic algorithm.
 
+[[PQL]] proves strict serializability for atomic composite operations: an earlier write is covered either by synchronous holder notification or by acceptance-frontier catch-up at lease activation. [[PQR]] instead combines acceptance visibility from an intersecting read quorum with execution confirmation that stabilizes the selected prefix. Its PDF gives prose reasoning and experimental history checks; a full proof including overwrite/data binding remains TODO. Sources: [[Paxos-Quorum-Leases-2014]], §3.6; [[Linearizable-Quorum-Reads-2019]], §§4, 6; [[read-freshness]].
+
 ## Related pages
 [[PigPaxos]], [[HydraPaxos]], [[WPaxos]], [[Atlas]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Avicenna]], [[Bodega]], [[Jetpack]], [[invalidation]], [[reliable-membership]], [[roster-lease]], [[view-change-hazard]], [[agreement]], [[recovery]], [[quorum]]

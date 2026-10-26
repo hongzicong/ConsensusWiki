@@ -1,7 +1,7 @@
 ﻿---
 type: comparison-dimension
 dimension: proof techniques
-protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus]
+protocols: [FastPaxos, FPaxos, OmniPaxos, GPaxos, EPaxos, EPaxosStar, Mencius, Atlas, SwiftPaxos, Pando, Rabia, CURP, Hermes, Copilot, Avicenna, Bodega, Jetpack, Hydra, HydraPaxos, WPaxos, KCensus, PQL, PQR]
 tags: [proof]
 ---
 
@@ -9,6 +9,8 @@ tags: [proof]
 
 | Protocol | Main proof object | Key invariant |
 |---|---|---|
+| [[PQR]] | Read/write intersection and an execution-confirmed selected prefix | Discovery observes earlier completed writes; rinse prevents returning provisional data; full recovery/data-binding proof remains TODO ([[Linearizable-Quorum-Reads-2019]], §§1, 3-4, 6) |
+| [[PQL]] | Active holder promises, acceptance-frontier catch-up, and atomic reads | Every earlier write is either synchronously notified or covered by activation catch-up; holder window stays inside binding grantor window ([[Paxos-Quorum-Leases-2014]], §§3.5-3.6) |
 | [[KCensus]] | Value-specific first/second-order evidence, frozen census, and causal indistinguishability | Single acceptance and monotone truthful evidence make every census preserve a committed value; stable-network lower bound constrains synthesis ([[KCensus-2026]], Appendices A–C; [[knowledge-census-recovery]]) |
 | [[FastPaxos]] | Round/value votes | Higher rounds cannot choose incompatible lower possible choices |
 | [[FPaxos]] | Phase-indexed quorum families, persistent promises, and accepted ballot/value | If `v` is decided at `p`, every later proposal carries `v`; one cross-phase acceptor suffices for the induction |

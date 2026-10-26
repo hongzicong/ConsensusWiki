@@ -43,5 +43,7 @@ For formal modeling, define the fast path by its commit predicate and recovery o
 
 [[WPaxos]] is another non-example: after [[object-stealing]] establishes a stable owner, repeated local Phase 2 lowers WAN latency, but the owner remains on the path and no separate fast quorum or conflict-dependent predicate exists.
 
+[[PQL]] and [[PQR]] expose different read fast paths: PQL reads at one caught-up active lease holder; PQR queries an intersecting quorum and skips a separate rinse when accepted/executed evidence is already clean. Neither introduces a fast write quorum. Sources: [[Paxos-Quorum-Leases-2014]], §§3.5-3.6; [[Linearizable-Quorum-Reads-2019]], §§4-4.1; [[read-strategies]].
+
 ## Related pages
 [[FastPaxos]], [[FPaxos]], [[OmniPaxos]], [[Hydra]], [[HydraPaxos]], [[WPaxos]], [[GPaxos]], [[EPaxos]], [[EPaxosStar]], [[PigPaxos]], [[Atlas]], [[SwiftPaxos]], [[Pando]], [[Rabia]], [[CURP]], [[Hermes]], [[Copilot]], [[Bodega]], [[Jetpack]], [[fast-paths]], [[slow-path]], [[recovery]], [[quorum]]
